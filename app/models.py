@@ -1,7 +1,4 @@
-from sqlalchemy import (
-    Column,
-    Integer
-)
+from sqlalchemy import Column, Integer
 
 from .db_connection import Base
 
