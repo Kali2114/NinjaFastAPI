@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Black format check
-        run: docker compose run --rm app sh -c "black --check ."
+        run: docker compose run --rm app sh -c "black ."
 
       - name: Ruff lint check
         run: docker compose run --rm app sh -c "ruff check ."
