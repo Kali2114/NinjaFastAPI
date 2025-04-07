@@ -13,6 +13,20 @@ services:
     volumes:
       - ./scripts:/docker-entrypoint-initdb.d
 
+  test-db:
+    image: postgres:16.1-alpine3.19
+    restart: always
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+    ports:
+      - "5432:5434"
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+
+
   app:
     build:
       context: .
