@@ -31,6 +31,7 @@ def wait_for_stable_status(container, stable_duration=3, interval=1):
 
 def start_database_container():
     client = docker.from_env()
+    scripts_dir = os.path.abspath("./scripts")
     container_name = "test-db"
 
     try:
@@ -51,6 +52,8 @@ def start_database_container():
             "POSTGRES_USER": os.getenv("POSTGRES_USER"),
             "POSTGRES_PASSWORD": os.getenv("POSTGRES_PASSWORD"),
         },
+        "volumes": [f"{scripts_dir}:/docker-entrypoint-initdb.d"],
+        "network_mode": "ninjafastapi-development_dev-network",
     }
 
     container = client.containers.run(**configuration_config)
