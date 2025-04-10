@@ -13,26 +13,9 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./scripts:/docker-entrypoint-initdb.d
-    networks:
-      - dev-network
-
-  test-db:
-    image: postgres:16.1-alpine3.19
-    restart: always
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    ports:
-      - "5434:5432"
-    volumes:
-      - ./scripts:/docker-entrypoint-initdb.d
-    networks:
-      - dev-network
-
 
   app:
     build:
@@ -50,15 +33,11 @@ services:
       - DB_PASS=${DB_PASS}
     depends_on:
       - dev-db
-    networks:
-      - dev-network
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
-    networks:
-      - dev-network
 
 name: ninjafastapi-development

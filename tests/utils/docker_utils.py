@@ -1,9 +1,11 @@
 import docker
+import psycopg2
 
 import os
 import time
 
 from dotenv import load_dotenv
+from psycopg2 import OperationalError
 
 load_dotenv()
 
@@ -29,6 +31,26 @@ def wait_for_stable_status(container, stable_duration=3, interval=1):
     return False
 
 
+def wait_for_postgres(container, host="127.0.0.1", port=5434, timeout=20):
+    print("Waiting for PostgreSQL to be ready...")
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            conn = psycopg2.connect(
+                dbname="ninjadb",
+                user="kamileg",
+                password="553355",
+                host=host,
+                port=port,
+            )
+            conn.close()
+            print("✅ PostgreSQL is ready!")
+            return
+        except OperationalError:
+            time.sleep(1)
+    raise TimeoutError("❌ PostgreSQL did not start in time.")
+
+
 def start_database_container():
     client = docker.from_env()
     scripts_dir = os.path.abspath("./scripts")
@@ -49,17 +71,19 @@ def start_database_container():
         "detach": True,
         "ports": {"5432": "5434"},
         "environment": {
-            "POSTGRES_USER": os.getenv("POSTGRES_USER"),
-            "POSTGRES_PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+            "POSTGRES_USER": "kamileg",
+            "POSTGRES_PASSWORD": "553355",
+            "POSTGRES_DB": "ninjadb",
         },
         "volumes": [f"{scripts_dir}:/docker-entrypoint-initdb.d"],
-        "network_mode": "ninjafastapi-development_dev-network",
+        "network": "ninjafastapi-development_default",
     }
 
     container = client.containers.run(**configuration_config)
+    wait_for_postgres(container)
 
     while not is_container_ready(container):
-        time.sleep(5)
+        time.sleep(1)
 
     if not wait_for_stable_status(container):
-        raise RuntimeError("Container did not stabilize within the specifed time.")
+        raise RuntimeError("Container did not stabilize within the specified time.")

@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 engine = create_engine(os.getenv("DEV_DATABASE_URL"))
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
 Base = declarative_base()
 
