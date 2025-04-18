@@ -5,7 +5,6 @@ import os
 import time
 
 from dotenv import load_dotenv
-from psycopg2 import OperationalError
 
 load_dotenv()
 
@@ -46,7 +45,7 @@ def wait_for_postgres(container, host="127.0.0.1", port=5434, timeout=20):
             conn.close()
             print("✅ PostgreSQL is ready!")
             return
-        except OperationalError:
+        except psycopg2.OperationalError:
             time.sleep(1)
     raise TimeoutError("❌ PostgreSQL did not start in time.")
 
@@ -87,3 +86,5 @@ def start_database_container():
 
     if not wait_for_stable_status(container):
         raise RuntimeError("Container did not stabilize within the specified time.")
+
+    return container
