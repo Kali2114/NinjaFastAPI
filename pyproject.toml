@@ -5,3 +5,12 @@ exclude = [
     ".fastvenv",
     "__pycache__",
 ]
+
+
+[tool.black]
+extend-exclude = '''
+/migrations/
+'''
+force-exclude = '''
+/migrations/
+'''

@@ -6,7 +6,7 @@ from alembic import context
 
 import os
 
-from app import models
+from app.models import ninja
 
 from dotenv import load_dotenv
 
@@ -24,7 +24,7 @@ config.set_section_option(
     "testdb", "sqlalchemy.url", os.environ.get("TEST_DATABASE_URL")
 )
 
-target_metadata = models.Base.metadata
+target_metadata = ninja.Base.metadata
 
 
 def run_migrations_offline() -> None:
