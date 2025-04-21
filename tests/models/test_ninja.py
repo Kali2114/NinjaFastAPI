@@ -26,3 +26,33 @@ def test_model_structure_column_data_types(db_inspector):
     assert isinstance(columns["alive"]["type"], Boolean)
     assert isinstance(columns["forbidden"]["type"], Boolean)
     assert isinstance(columns["jinchuriki"]["type"], SQLAEnum)
+
+
+def test_model_structure_nullable_constraints(db_inspector):
+    table = "ninja"
+    columns = db_inspector.get_columns(table)
+
+    expected_nullable = {
+        "id": False,
+        "name": False,
+        "clan": False,
+        "level": False,
+        "experience": False,
+        # "team_id": False,
+        "sensei": True,
+        "summon_animal": True,
+        "mission_completed": False,
+        # "village_id": True,
+        "rank": False,
+        "kekkei_genkai": True,
+        "chakra_nature": True,
+        "alive": False,
+        "forbidden": False,
+        "jinchuriki": False,
+    }
+
+    for column in columns:
+        column_name = column["name"]
+        assert column["nullable"] == expected_nullable.get(
+            column_name
+        ), f"column '{column_name}' is not nullable as expected."

@@ -10,7 +10,7 @@ from tests.utils.database_utils import migrate_to_db
 
 @pytest.fixture(scope="session", autouse=True)
 def db_session():
-    container = start_database_container()
+    start_database_container()
     engine = create_engine(os.getenv("TEST_DATABASE_URL"))
 
     with engine.begin() as connection:
@@ -20,6 +20,6 @@ def db_session():
 
     yield session_local
 
-    container.stop()
-    container.remove()
+    # container.stop()
+    # container.remove()
     engine.dispose()

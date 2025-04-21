@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import validates
 
@@ -13,22 +13,22 @@ class Ninja(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(20), nullable=False)
     clan = Column(String(20), nullable=False)
-    level = Column(Integer, default=1)
-    experience = Column(Integer, default=0)
-    team_id = Column(ForeignKey("team.id"))
+    level = Column(Integer, default=1, nullable=False)
+    experience = Column(Integer, default=0, nullable=False)
+    # team_id = Column(ForeignKey("team.id"))
     sensei = Column(String(20))
     summon_animal = Column(String(20))
-    mission_completed = Column(Integer, default=0)
-    village_id = Column(ForeignKey("village.id"))
-    rank = Column(SQLAEnum(enums.RankEnum), default=enums.RankEnum.academy)
+    mission_completed = Column(Integer, default=0, nullable=False)
+    # village_id = Column(ForeignKey("village.id"))
+    rank = Column(SQLAEnum(enums.RankEnum), default=enums.RankEnum.academy, nullable=False)
     kekkei_genkai = Column(
         SQLAEnum(enums.KekkeiGenkaiEnum), default=enums.KekkeiGenkaiEnum.none
     )
     chakra_nature = Column(ARRAY(String))
-    alive = Column(Boolean, default=True)
-    forbidden = Column(Boolean, default=False)
+    alive = Column(Boolean, default=True, nullable=False)
+    forbidden = Column(Boolean, default=False, nullable=False)
     jinchuriki = Column(
-        SQLAEnum(enums.JinchurikiEnum), default=enums.JinchurikiEnum.none
+        SQLAEnum(enums.JinchurikiEnum), default=enums.JinchurikiEnum.none, nullable=False
     )
 
     @validates("chakra_nature")
