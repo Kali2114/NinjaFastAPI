@@ -56,3 +56,34 @@ def test_model_structure_nullable_constraints(db_inspector):
         assert column["nullable"] == expected_nullable.get(
             column_name
         ), f"column '{column_name}' is not nullable as expected."
+
+
+def test_model_structure_column_constraints(db_inspector):
+    table = "ninja"
+    constraints = db_inspector.get_check_constraints(table)
+    expected_constraints = {
+        "name_length_check",
+        "clan_length_check",
+        "min_1_lvl_check",
+        "experience_positive_check",
+        "mission_positive_check",
+    }
+    constraint_names = {c["name"] for c in constraints}
+
+    assert expected_constraints.issubset(
+        constraint_names
+    ), f"Missing constraints {expected_constraints - constraint_names}"
+
+
+def test_model_structure_default_values(db_inspector):
+    table = "ninja"
+    columns = {columns["name"]: columns for columns in db_inspector.get_columns(table)}
+
+    assert columns["level"]["default"] == "1"
+    assert columns["experience"]["default"] == "0"
+    assert columns["mission_completed"]["default"] == "0"
+    assert columns["rank"]["default"] == "'academy'::rankenum"
+    assert columns["alive"]["default"] == "true"
+    assert columns["forbidden"]["default"] == "false"
+    assert columns["kekkei_genkai"]["default"] == "'none'::kekkeigenkaienum"
+    assert columns["jinchuriki"]["default"] == "'none'::jinchurikienum"

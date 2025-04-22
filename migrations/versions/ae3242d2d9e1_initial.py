@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 5bc79ea33e94
+Revision ID: ae3242d2d9e1
 Revises:
-Create Date: 2025-04-20 15:51:26.342064
+Create Date: 2025-04-22 22:09:50.469374
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "5bc79ea33e94"
+revision: str = "ae3242d2d9e1"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,17 +27,25 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=20), nullable=False),
         sa.Column("clan", sa.String(length=20), nullable=False),
-        sa.Column("level", sa.Integer(), nullable=True),
-        sa.Column("experience", sa.Integer(), nullable=True),
+        sa.Column("level", sa.Integer(), server_default=sa.text("1"), nullable=False),
+        sa.Column(
+            "experience", sa.Integer(), server_default=sa.text("0"), nullable=False
+        ),
         sa.Column("sensei", sa.String(length=20), nullable=True),
         sa.Column("summon_animal", sa.String(length=20), nullable=True),
-        sa.Column("mission_completed", sa.Integer(), nullable=True),
+        sa.Column(
+            "mission_completed",
+            sa.Integer(),
+            server_default=sa.text("0"),
+            nullable=False,
+        ),
         sa.Column(
             "rank",
             sa.Enum(
                 "academy", "genin", "chunin", "jonin", "anbu", "kage", name="rankenum"
             ),
-            nullable=True,
+            server_default=sa.text("'academy'"),
+            nullable=False,
         ),
         sa.Column(
             "kekkei_genkai",
@@ -49,11 +57,16 @@ def upgrade() -> None:
                 "none",
                 name="kekkeigenkaienum",
             ),
+            server_default=sa.text("'none'"),
             nullable=True,
         ),
         sa.Column("chakra_nature", postgresql.ARRAY(sa.String()), nullable=True),
-        sa.Column("alive", sa.Boolean(), nullable=True),
-        sa.Column("forbidden", sa.Boolean(), nullable=True),
+        sa.Column(
+            "alive", sa.Boolean(), server_default=sa.text("true"), nullable=False
+        ),
+        sa.Column(
+            "forbidden", sa.Boolean(), server_default=sa.text("false"), nullable=False
+        ),
         sa.Column(
             "jinchuriki",
             sa.Enum(
@@ -70,9 +83,16 @@ def upgrade() -> None:
                 "none",
                 name="jinchurikienum",
             ),
-            nullable=True,
+            server_default=sa.text("'none'"),
+            nullable=False,
         ),
+        sa.CheckConstraint("LENGTH(clan) > 0", name="clan_length_check"),
+        sa.CheckConstraint("LENGTH(name) > 0", name="name_length_check"),
+        sa.CheckConstraint("experience >= 0", name="experience_positive_check"),
+        sa.CheckConstraint("level >= 1", name="min_1_lvl_check"),
+        sa.CheckConstraint("mission_completed >= 0", name="mission_positive_check"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("name"),
     )
     # ### end Alembic commands ###
 
