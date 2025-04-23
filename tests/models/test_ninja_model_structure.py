@@ -87,3 +87,19 @@ def test_model_structure_default_values(db_inspector):
     assert columns["forbidden"]["default"] == "false"
     assert columns["kekkei_genkai"]["default"] == "'none'::kekkeigenkaienum"
     assert columns["jinchuriki"]["default"] == "'none'::jinchurikienum"
+
+
+def test_model_structure_column_lengths(db_inspector):
+    table = "ninja"
+    columns = {columns["name"]: columns for columns in db_inspector.get_columns(table)}
+
+    assert columns["name"]["type"].length == 20
+    assert columns["clan"]["type"].length == 20
+    assert columns["sensei"]["type"].length == 20
+    assert columns["summon_animal"]["type"].length == 20
+
+
+def test_model_structure_unique_constraints(db_inspector):
+    constraints = db_inspector.get_unique_constraints("ninja")
+
+    assert any(constraint["name"] == "uq_ninja_name" for constraint in constraints)

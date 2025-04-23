@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import validates
@@ -59,6 +60,7 @@ class Ninja(Base):
         CheckConstraint("level >= 1", name="min_1_lvl_check"),
         CheckConstraint("experience >= 0", name="experience_positive_check"),
         CheckConstraint("mission_completed >= 0", name="mission_positive_check"),
+        UniqueConstraint("name", name="uq_ninja_name"),
     )
 
     @validates("chakra_nature")
