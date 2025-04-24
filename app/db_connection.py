@@ -1,21 +1,29 @@
 import os
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from pathlib import Path
+import sys
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 
-engine = create_engine(os.getenv("DEV_DATABASE_URL"))
+if "pytest" in sys.modules:
+    DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+else:
+    DATABASE_URL = os.getenv("DEV_DATABASE_URL")
+
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
 Base = declarative_base()
 
 
+@pytest.fixture
 def get_db_session():
     db = SessionLocal()
     try:

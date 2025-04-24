@@ -11,9 +11,11 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import validates
 
+import random
 
 from app.models import enums
 from app.db_connection import Base
+from .utils import ensure_alive
 
 
 class Ninja(Base):
@@ -64,8 +66,37 @@ class Ninja(Base):
     )
 
     @validates("chakra_nature")
-    def validate_chakra_nautre(self, key, value):
+    def validate_chakra_nature(self, key, value):
         allowed = {"Fire", "Water", "Lightning", "Earth", "Wind"}
         if not set(value).issubset(allowed):
             raise ValueError("Invalid chakra nature(s)")
         return value
+
+    def add_experience(self):
+        ensure_alive(self)
+        self.experience += random.randint(1, 4)
+        self._check_level_up()
+
+    def _check_level_up(self):
+        for lvl in enums.LEVEL_THRESHOLDS.keys():
+            if self.experience >= enums.LEVEL_THRESHOLDS[lvl]:
+                self.level = lvl
+
+    def learn_chakra_nature(self, chakra):
+        ensure_alive(self)
+        self.validate_chakra_nature("chakra_nature", [chakra])
+        self.chakra_nature = (self.chakra_nature or []) + [chakra]
+
+    def mark_as_dead(self):
+        self.alive = False
+
+    def mark_as_forbidden(self):
+        ensure_alive(self)
+        self.forbidden = True
+
+    def change_rank(self, new_rank):
+        ensure_alive(self)
+        try:
+            self.rank = enums.RankEnum(new_rank)
+        except ValueError:
+            raise ValueError("Invalid rank")
