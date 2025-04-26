@@ -24,24 +24,29 @@ class TestNinjaUnit:
         self.session.commit()
         self.session.close()
 
+    @pytest.mark.integration
     def test_valid_chakra_nature(self):
         res = self.ninja.validate_chakra_nature("chakra_nature", ["Fire", "Water"])
         assert res == ["Fire", "Water"]
 
+    @pytest.mark.integration
     def test_invalid_chakra_nature(self):
         with pytest.raises(ValueError) as e:
             self.ninja.validate_chakra_nature("chakra_nature", ["Fire", "Shadow"])
         assert "Invalid chakra nature(s)" in str(e.value)
 
+    @pytest.mark.integration
     def test_experience_gained_successful(self):
         self.ninja.add_experience()
         assert self.ninja.experience > 0
 
+    @pytest.mark.integration
     def test_check_level_up(self):
         self.ninja.experience = 1020
         self.ninja._check_level_up()
         assert self.ninja.level == 6
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         "chakra, is_valid",
         [("Fire", True), ("Water", True), ("Shadow", False), ("Steam", False)],
@@ -54,23 +59,28 @@ class TestNinjaUnit:
             with pytest.raises(ValueError, match="Invalid chakra nature"):
                 self.ninja.learn_chakra_nature(chakra)
 
+    @pytest.mark.integration
     def test_mark_as_dead(self):
         self.ninja.mark_as_dead()
         assert not self.ninja.alive
 
+    @pytest.mark.integration
     def test_mark_as_forbidden(self):
         self.ninja.mark_as_forbidden()
         assert self.ninja.forbidden
 
+    @pytest.mark.integration
     def test_valid_change_rank(self):
         self.ninja.change_rank("kage")
         assert self.ninja.rank == enums.RankEnum.kage
 
+    @pytest.mark.integration
     def test_invalid_change_rank(self):
         with pytest.raises(ValueError) as e:
             self.ninja.change_rank("Error")
         assert "Invalid rank" in str(e)
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         "method_name, args, kwargs",
         [
