@@ -1,15 +1,15 @@
 from sqlalchemy import Integer, String, Boolean, Enum as SQLAEnum
 from sqlalchemy.dialects.postgresql import ARRAY
-import pytest
+
+
+class TestNinjaModelExists:
+
+    def test_table_exists(self, db_inspector):
+        assert db_inspector.has_table("ninja")
 
 
 class TestNinjaModelStructure:
 
-    @pytest.mark.model
-    def test_table_exists(self, db_inspector):
-        assert db_inspector.has_table("ninja")
-
-    @pytest.mark.model_structure
     def test_column_data_types(self, db_inspector):
         table = "ninja"
         columns = {column["name"]: column for column in db_inspector.get_columns(table)}
@@ -31,7 +31,6 @@ class TestNinjaModelStructure:
         assert isinstance(columns["forbidden"]["type"], Boolean)
         assert isinstance(columns["jinchuriki"]["type"], SQLAEnum)
 
-    @pytest.mark.model_structure
     def test_nullable_constraints(self, db_inspector):
         table = "ninja"
         columns = db_inspector.get_columns(table)
@@ -61,7 +60,6 @@ class TestNinjaModelStructure:
                 column_name
             ), f"column '{column_name}' is not nullable as expected."
 
-    @pytest.mark.model_structure
     def test_column_constraints(self, db_inspector):
         table = "ninja"
         constraints = db_inspector.get_check_constraints(table)
@@ -78,7 +76,6 @@ class TestNinjaModelStructure:
             constraint_names
         ), f"Missing constraints {expected_constraints - constraint_names}"
 
-    @pytest.mark.model_structure
     def test_default_values(self, db_inspector):
         table = "ninja"
         columns = {
@@ -94,7 +91,6 @@ class TestNinjaModelStructure:
         assert columns["kekkei_genkai"]["default"] == "'none'::kekkeigenkaienum"
         assert columns["jinchuriki"]["default"] == "'none'::jinchurikienum"
 
-    @pytest.mark.model_structure
     def test_column_lengths(self, db_inspector):
         table = "ninja"
         columns = {
@@ -106,7 +102,6 @@ class TestNinjaModelStructure:
         assert columns["sensei"]["type"].length == 20
         assert columns["summon_animal"]["type"].length == 20
 
-    @pytest.mark.model_structure
     def test_unique_constraints(self, db_inspector):
         constraints = db_inspector.get_unique_constraints("ninja")
 
