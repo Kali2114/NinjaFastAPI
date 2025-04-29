@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: f3dc06a06bb6
+Revision ID: b2fb9b41ca91
 Revises: 
-Create Date: 2025-04-23 22:18:53.279065
+Create Date: 2025-04-29 21:41:58.487291
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f3dc06a06bb6'
+revision: str = 'b2fb9b41ca91'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,6 +24,7 @@ def upgrade() -> None:
     op.create_table('ninja',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=20), nullable=False),
+    sa.Column('chakra', sa.Integer(), server_default=sa.text('100'), nullable=False),
     sa.Column('clan', sa.String(length=20), nullable=False),
     sa.Column('level', sa.Integer(), server_default=sa.text('1'), nullable=False),
     sa.Column('experience', sa.Integer(), server_default=sa.text('0'), nullable=False),
@@ -38,6 +39,7 @@ def upgrade() -> None:
     sa.Column('jinchuriki', sa.Enum('shukaku', 'matatabi', 'isobu', 'son_goku', 'kokuo', 'saiken', 'choumei', 'gyuki', 'kurama', 'juubi', 'none', name='jinchurikienum'), server_default=sa.text("'none'"), nullable=False),
     sa.CheckConstraint('LENGTH(clan) > 0', name='clan_length_check'),
     sa.CheckConstraint('LENGTH(name) > 0', name='name_length_check'),
+    sa.CheckConstraint('chakra >= 0', name='chakra_check'),
     sa.CheckConstraint('experience >= 0', name='experience_positive_check'),
     sa.CheckConstraint('level >= 1', name='min_1_lvl_check'),
     sa.CheckConstraint('mission_completed >= 0', name='mission_positive_check'),

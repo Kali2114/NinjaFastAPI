@@ -16,6 +16,7 @@ class TestNinjaModelStructure:
 
         assert isinstance(columns["id"]["type"], Integer)
         assert isinstance(columns["name"]["type"], String)
+        assert isinstance(columns["chakra"]["type"], Integer)
         assert isinstance(columns["clan"]["type"], String)
         assert isinstance(columns["level"]["type"], Integer)
         assert isinstance(columns["experience"]["type"], Integer)
@@ -38,6 +39,7 @@ class TestNinjaModelStructure:
         expected_nullable = {
             "id": False,
             "name": False,
+            "chakra": False,
             "clan": False,
             "level": False,
             "experience": False,
@@ -65,6 +67,7 @@ class TestNinjaModelStructure:
         constraints = db_inspector.get_check_constraints(table)
         expected_constraints = {
             "name_length_check",
+            "chakra_check",
             "clan_length_check",
             "min_1_lvl_check",
             "experience_positive_check",
@@ -82,6 +85,7 @@ class TestNinjaModelStructure:
             columns["name"]: columns for columns in db_inspector.get_columns(table)
         }
 
+        assert columns["chakra"]["default"] == "100"
         assert columns["level"]["default"] == "1"
         assert columns["experience"]["default"] == "0"
         assert columns["mission_completed"]["default"] == "0"

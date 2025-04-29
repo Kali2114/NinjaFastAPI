@@ -1,5 +1,7 @@
 import pytest
 
+import random
+
 from app.models.ninja import Ninja
 from app.db_connection import SessionLocal
 from app.models import enums
@@ -37,10 +39,70 @@ class TestNinjaIntegration:
         self.ninja.add_experience()
         assert self.ninja.experience > 0
 
-    def test_check_level_up(self):
-        self.ninja.experience = 1020
+    @pytest.mark.parametrize(
+        "experience, expected_level",
+        [
+            (0, 1),
+            (50, 1),
+            (99, 1),
+            (100, 2),
+            (249, 2),
+            (250, 3),
+            (449, 3),
+            (450, 4),
+            (700, 5),
+            (1020, 6),
+            (3000, 10),
+        ],
+    )
+    def test_check_level_up(self, experience, expected_level):
+        self.ninja.experience = experience
         self.ninja._check_level_up()
-        assert self.ninja.level == 6
+        assert self.ninja.level == expected_level
+
+    @pytest.mark.parametrize("chakra_cost, xp_gain", [(30, 2), (40, 4), (50, 1)])
+    def test_train(self, monkeypatch, chakra_cost, xp_gain):
+        xp_before = self.ninja.experience
+        seq = iter([chakra_cost, xp_gain])
+        monkeypatch.setattr(random, "randint", lambda *args, **kwargs: next(seq))
+        self.ninja.train()
+
+        assert self.ninja.chakra == 100 - chakra_cost
+        assert xp_before < self.ninja.experience <= xp_before + 4
+
+    @pytest.mark.parametrize(
+        "level, expected_chakra",
+        [
+            (1, 100),
+            (2, 120),
+            (3, 150),
+            (4, 190),
+            (5, 240),
+            (6, 300),
+            (7, 370),
+            (8, 450),
+            (9, 540),
+            (10, 640),
+        ],
+    )
+    def test_rest_restores_max_chakra(self, level, expected_chakra):
+        self.ninja.level = level
+        self.ninja.chakra = 50
+        self.ninja.rest()
+
+        assert self.ninja.chakra == expected_chakra
+
+    def test_rest_fails_if_ninja_is_dead(self):
+        self.ninja.mark_as_dead()
+
+        with pytest.raises(RuntimeError, match="Ninja is dead"):
+            self.ninja.rest()
+
+    @pytest.mark.parametrize("lvl, expected_chakra", enums.CHAKRA_THRESHOLDS.items())
+    def test_check_chakra(self, lvl, expected_chakra):
+        self.ninja.level = lvl
+        self.ninja._check_chakra_level()
+        self.ninja.chakra = expected_chakra
 
     @pytest.mark.parametrize(
         "chakra, is_valid",

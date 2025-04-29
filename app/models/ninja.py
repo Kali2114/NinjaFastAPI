@@ -23,6 +23,7 @@ class Ninja(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(20), unique=True, nullable=False)
+    chakra = Column(Integer, default=100, server_default=text("100"), nullable=False)
     clan = Column(String(20), nullable=False)
     level = Column(Integer, default=1, server_default=text("1"), nullable=False)
     experience = Column(Integer, default=0, server_default=text("0"), nullable=False)
@@ -58,6 +59,7 @@ class Ninja(Base):
 
     __table_args__ = (
         CheckConstraint("LENGTH(name) > 0", name="name_length_check"),
+        CheckConstraint("chakra >= 0", name="chakra_check"),
         CheckConstraint("LENGTH(clan) > 0", name="clan_length_check"),
         CheckConstraint("level >= 1", name="min_1_lvl_check"),
         CheckConstraint("experience >= 0", name="experience_positive_check"),
@@ -77,10 +79,28 @@ class Ninja(Base):
         self.experience += random.randint(1, 4)
         self._check_level_up()
 
+    def train(self):
+        ensure_alive(self)
+        chakra_spent = random.randint(30, 50)
+        if self.chakra < chakra_spent:
+            raise RuntimeError("Not enough chakra for training")
+        self.chakra -= chakra_spent
+        self.add_experience()
+
     def _check_level_up(self):
+        current_lvl = self.level
         for lvl in enums.LEVEL_THRESHOLDS.keys():
             if self.experience >= enums.LEVEL_THRESHOLDS[lvl]:
                 self.level = lvl
+        if current_lvl != self.level:
+            self._check_chakra_level()
+
+    def rest(self):
+        ensure_alive(self)
+        self.chakra = enums.CHAKRA_THRESHOLDS[self.level]
+
+    def _check_chakra_level(self):
+        self.chakra = enums.CHAKRA_THRESHOLDS[self.level]
 
     def learn_chakra_nature(self, chakra):
         ensure_alive(self)
