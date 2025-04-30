@@ -20,7 +20,7 @@ class TestNinjaModelStructure:
         assert isinstance(columns["clan"]["type"], String)
         assert isinstance(columns["level"]["type"], Integer)
         assert isinstance(columns["experience"]["type"], Integer)
-        # assert isinstance(columns["team_id"]["type"], Integer)
+        assert isinstance(columns["team_id"]["type"], Integer)
         assert isinstance(columns["sensei"]["type"], String)
         assert isinstance(columns["summon_animal"]["type"], String)
         assert isinstance(columns["mission_completed"]["type"], Integer)
@@ -43,7 +43,8 @@ class TestNinjaModelStructure:
             "clan": False,
             "level": False,
             "experience": False,
-            # "team_id": False,
+            "team_id": True,
+            "team": False,
             "sensei": True,
             "summon_animal": True,
             "mission_completed": False,

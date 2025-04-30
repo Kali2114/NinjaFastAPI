@@ -7,9 +7,10 @@ from sqlalchemy import (
     CheckConstraint,
     text,
     UniqueConstraint,
+    ForeignKey,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, relationship
 
 import random
 
@@ -27,7 +28,8 @@ class Ninja(Base):
     clan = Column(String(20), nullable=False)
     level = Column(Integer, default=1, server_default=text("1"), nullable=False)
     experience = Column(Integer, default=0, server_default=text("0"), nullable=False)
-    # team_id = Column(ForeignKey("team.id"))
+    team_id = Column(ForeignKey("team.id"), nullable=True)
+    team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     sensei = Column(String(20))
     summon_animal = Column(String(20))
     mission_completed = Column(
