@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship
 from app.db_connection import Base
 
 from .utils import validate_ninja_can_join_team
+from app.models import enums
 
 
 class Team(Base):
@@ -32,8 +33,10 @@ class Team(Base):
 
     def set_sensei(self, ninja, session):
         validate_ninja_can_join_team(ninja)
+        if ninja.rank != enums.RankEnum.jonin:
+            raise ValueError("Only jonin can be a sensei.")
         if ninja in self.members:
-            raise ValueError("Student can not be a sensei.")
+            raise ValueError("Team member cannot be assigned as sensei.")
         existing = session.query(Team).filter(Team.sensei_id == ninja.id).first()
         if existing:
             raise ValueError("Ninja is already a sensei of another team.")
