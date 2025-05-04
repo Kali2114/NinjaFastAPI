@@ -35,7 +35,10 @@ class Ninja(Base):
     mission_completed = Column(
         Integer, default=0, server_default=text("0"), nullable=False
     )
-    # village_id = Column(ForeignKey("village.id"))
+    village_id = Column(ForeignKey("village.id"), nullable=True)
+    village = relationship(
+        "Village", back_populates="ninjas", foreign_keys=[village_id]
+    )
     rank = Column(
         SQLAEnum(enums.RankEnum),
         default=enums.RankEnum.academy,

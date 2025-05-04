@@ -32,6 +32,44 @@ class JinchurikiEnum(enum.Enum):
     none = "None"
 
 
+class CountryEnum(enum.Enum):
+    fire = "Fire Country"
+    water = "Water Country"
+    wind = "Wind Country"
+    earth = "Earth Country"
+    lightning = "Lightning Country"
+    rain = "Rain Country"
+    grass = "Grass Country"
+    sound = "Sound Country"
+    waterfall = "Waterfall Country"
+    iron = "Iron Country"
+    moon = "Moon Country"
+    sky = "Sky Country"
+    sea = "Sea Country"
+    swamp = "Swamp Country"
+    hot_springs = "Hot Springs Country"
+    frost = "Frost Country"
+    claw = "Claw Country"
+    fang = "Fang Country"
+    wave = "Wave Country"
+
+
+class VillageEnum(enum.Enum):
+    konoha = "Hidden Leaf Village"
+    suna = "Hidden Sand Village"
+    kiri = "Hidden Mist Village"
+    kumo = "Hidden Cloud Village"
+    iwa = "Hidden Stone Village"
+    oto = "Hidden Sound Village"
+    ame = "Hidden Rain Village"
+    kusa = "Hidden Grass Village"
+    taki = "Hidden Waterfall Village"
+    yuki = "Hidden Snow Village"
+    uzushiogakure = "Hidden Whirlpool Village"
+    hoshigakure = "Hidden Star Village"
+    yugakure = "Hidden Hot Water Village"
+
+
 LEVEL_THRESHOLDS = {
     1: 0,
     2: 100,

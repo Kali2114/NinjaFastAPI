@@ -24,7 +24,7 @@ class TestNinjaModelStructure:
         assert isinstance(columns["sensei"]["type"], String)
         assert isinstance(columns["summon_animal"]["type"], String)
         assert isinstance(columns["mission_completed"]["type"], Integer)
-        # assert isinstance(columns["village_id"]["type"], Integer)
+        assert isinstance(columns["village_id"]["type"], Integer)
         assert isinstance(columns["rank"]["type"], SQLAEnum)
         assert isinstance(columns["kekkei_genkai"]["type"], SQLAEnum)
         assert isinstance(columns["chakra_nature"]["type"], ARRAY)
@@ -48,7 +48,7 @@ class TestNinjaModelStructure:
             "sensei": True,
             "summon_animal": True,
             "mission_completed": False,
-            # "village_id": True,
+            "village_id": True,
             "rank": False,
             "kekkei_genkai": True,
             "chakra_nature": True,

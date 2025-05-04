@@ -5,21 +5,14 @@ import random
 from app.models.ninja import Ninja
 from app.db_connection import SessionLocal
 from app.models import enums
+from tests.models.utils import create_ninja
 
 
 class TestNinjaIntegration:
 
     def setup_method(self):
-        self.ninja = Ninja(
-            name="Naruto",
-            clan="Uzumaki",
-            rank=enums.RankEnum.academy,
-            jinchuriki=enums.JinchurikiEnum.none,
-        )
         self.session = SessionLocal()
-        self.session.add(self.ninja)
-        self.session.commit()
-        self.session.refresh(self.ninja)
+        self.ninja = create_ninja(self.session)
 
     def teardown_method(self):
         self.session.query(Ninja).delete()

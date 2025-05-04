@@ -2,37 +2,32 @@ import pytest
 
 from app.db_connection import SessionLocal
 from app.models.team import Team
-from app.models.ninja import Ninja, enums
+from app.models.ninja import Ninja
+from app.models.ninja import enums
+from tests.models.utils import create_ninja
 
 
 class TestTeamIntegration:
 
     def setup_method(self):
-        self.ninjas = []
-        for x in range(1, 7):
-            self.ninja = Ninja(
-                name=f"Student{x}",
-                clan="Test",
-                rank=enums.RankEnum.chunin,
-                jinchuriki=enums.JinchurikiEnum.none,
-            )
-            self.ninjas.append(self.ninja)
-        self.academy = self.ninjas[4]
-        self.academy.rank = enums.RankEnum.academy
-        self.sensei = self.ninjas[5]
-        self.sensei.rank = enums.RankEnum.jonin
+        self.session = SessionLocal()
+
+        self.ninjas = [create_ninja(self.session) for _ in range(4)]
+        self.academy = create_ninja(self.session, rank=enums.RankEnum.academy)
+        self.sensei = create_ninja(self.session, rank=enums.RankEnum.jonin)
+
+        self.ninjas.extend([self.academy, self.sensei])
+
         self.team1 = Team(name="test_team_1")
         self.team2 = Team(name="test_team_2")
 
-        self.session = SessionLocal()
-        self.session.add_all(self.ninjas)
-        self.session.add(self.team1)
-        self.session.add(self.team2)
+        self.session.add_all([self.team1, self.team2])
         self.session.commit()
 
     def teardown_method(self):
         self.session.query(Ninja).delete()
         self.session.query(Team).delete()
+
         self.session.commit()
         self.session.close()
 
