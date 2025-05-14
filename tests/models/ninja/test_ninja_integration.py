@@ -3,19 +3,22 @@ import pytest
 import random
 
 from app.models.ninja import Ninja
+from app.models.user import User
 from app.db_connection import SessionLocal
 from app.models import enums
-from tests.models.utils import create_ninja
+from tests.models.utils import create_ninja, create_user
 
 
 class TestNinjaIntegration:
 
     def setup_method(self):
         self.session = SessionLocal()
-        self.ninja = create_ninja(self.session)
+        self.user = create_user(self.session)
+        self.ninja = create_ninja(self.user.id, self.session)
 
     def teardown_method(self):
         self.session.query(Ninja).delete()
+        self.session.query(User).delete()
         self.session.commit()
         self.session.close()
 

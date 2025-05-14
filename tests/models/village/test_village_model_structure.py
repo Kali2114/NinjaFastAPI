@@ -8,10 +8,12 @@ class TestVillageModelExists:
 
 
 class TestVillageModelStructure:
+    table = "village"
 
     def test_column_data_types(self, db_inspector):
-        table = "village"
-        columns = {column["name"]: column for column in db_inspector.get_columns(table)}
+        columns = {
+            column["name"]: column for column in db_inspector.get_columns(self.table)
+        }
 
         assert isinstance(columns["id"]["type"], Integer)
         assert isinstance(columns["name"]["type"], SQLAEnum)
@@ -19,8 +21,7 @@ class TestVillageModelStructure:
         assert isinstance(columns["kage_id"]["type"], Integer)
 
     def test_nullable_constraints(self, db_inspector):
-        table = "village"
-        columns = db_inspector.get_columns(table)
+        columns = db_inspector.get_columns(self.table)
 
         expected_nullable = {
             "id": False,
@@ -36,7 +37,7 @@ class TestVillageModelStructure:
             ), f"column '{column_name}' is not nullable as expected."
 
     def test_unique_constraints(self, db_inspector):
-        constraints = db_inspector.get_unique_constraints("village")
+        constraints = db_inspector.get_unique_constraints(self.table)
 
         assert any(constraint["name"] == "uq_kage_id" for constraint in constraints)
         assert any(

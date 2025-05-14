@@ -30,6 +30,8 @@ class Ninja(Base):
     experience = Column(Integer, default=0, server_default=text("0"), nullable=False)
     team_id = Column(ForeignKey("team.id"), nullable=True)
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
+    user_id = Column(ForeignKey("user.id"), nullable=False)
+    user = relationship("User", back_populates="ninjas")
     sensei = Column(String(20))
     summon_animal = Column(String(20))
     mission_completed = Column(
@@ -94,10 +96,16 @@ class Ninja(Base):
 
     def _check_level_up(self):
         current_lvl = self.level
-        for lvl in enums.LEVEL_THRESHOLDS.keys():
-            if self.experience >= enums.LEVEL_THRESHOLDS[lvl]:
-                self.level = lvl
-        if current_lvl != self.level:
+        new_lvl = max(
+            [
+                lvl
+                for lvl, xp in enums.LEVEL_THRESHOLDS.items()
+                if self.experience >= xp
+            ],
+            default=current_lvl,
+        )
+        if new_lvl != current_lvl:
+            self.level = new_lvl
             self._check_chakra_level()
 
     def rest(self):

@@ -8,18 +8,19 @@ class TestTeamModelExists:
 
 
 class TestTeamModelStructure:
+    table = "team"
 
     def test_column_data_types(self, db_inspector):
-        table = "team"
-        columns = {column["name"]: column for column in db_inspector.get_columns(table)}
+        columns = {
+            column["name"]: column for column in db_inspector.get_columns(self.table)
+        }
 
         assert isinstance(columns["id"]["type"], Integer)
         assert isinstance(columns["name"]["type"], String)
         assert isinstance(columns["sensei_id"]["type"], Integer)
 
     def test_nullable_constraints(self, db_inspector):
-        table = "team"
-        columns = db_inspector.get_columns(table)
+        columns = db_inspector.get_columns(self.table)
 
         expected_nullable = {
             "id": False,
@@ -34,15 +35,14 @@ class TestTeamModelStructure:
             ), f"column '{column_name}' is not nullable as expected."
 
     def test_column_lengths(self, db_inspector):
-        table = "team"
         columns = {
-            columns["name"]: columns for columns in db_inspector.get_columns(table)
+            column["name"]: column for column in db_inspector.get_columns(self.table)
         }
 
         assert columns["name"]["type"].length == 20
 
     def test_unique_constraints(self, db_inspector):
-        constraints = db_inspector.get_unique_constraints("team")
+        constraints = db_inspector.get_unique_constraints(self.table)
 
         assert any(constraint["name"] == "uq_team_name" for constraint in constraints)
         assert any(constraint["name"] == "uq_sensei_id" for constraint in constraints)

@@ -9,10 +9,12 @@ class TestNinjaModelExists:
 
 
 class TestNinjaModelStructure:
+    table = "ninja"
 
     def test_column_data_types(self, db_inspector):
-        table = "ninja"
-        columns = {column["name"]: column for column in db_inspector.get_columns(table)}
+        columns = {
+            column["name"]: column for column in db_inspector.get_columns(self.table)
+        }
 
         assert isinstance(columns["id"]["type"], Integer)
         assert isinstance(columns["name"]["type"], String)
@@ -25,6 +27,7 @@ class TestNinjaModelStructure:
         assert isinstance(columns["summon_animal"]["type"], String)
         assert isinstance(columns["mission_completed"]["type"], Integer)
         assert isinstance(columns["village_id"]["type"], Integer)
+        assert isinstance(columns["user_id"]["type"], Integer)
         assert isinstance(columns["rank"]["type"], SQLAEnum)
         assert isinstance(columns["kekkei_genkai"]["type"], SQLAEnum)
         assert isinstance(columns["chakra_nature"]["type"], ARRAY)
@@ -33,8 +36,7 @@ class TestNinjaModelStructure:
         assert isinstance(columns["jinchuriki"]["type"], SQLAEnum)
 
     def test_nullable_constraints(self, db_inspector):
-        table = "ninja"
-        columns = db_inspector.get_columns(table)
+        columns = db_inspector.get_columns(self.table)
 
         expected_nullable = {
             "id": False,
@@ -49,6 +51,7 @@ class TestNinjaModelStructure:
             "summon_animal": True,
             "mission_completed": False,
             "village_id": True,
+            "user_id": False,
             "rank": False,
             "kekkei_genkai": True,
             "chakra_nature": True,
@@ -64,8 +67,7 @@ class TestNinjaModelStructure:
             ), f"column '{column_name}' is not nullable as expected."
 
     def test_column_constraints(self, db_inspector):
-        table = "ninja"
-        constraints = db_inspector.get_check_constraints(table)
+        constraints = db_inspector.get_check_constraints(self.table)
         expected_constraints = {
             "name_length_check",
             "chakra_check",
@@ -81,9 +83,8 @@ class TestNinjaModelStructure:
         ), f"Missing constraints {expected_constraints - constraint_names}"
 
     def test_default_values(self, db_inspector):
-        table = "ninja"
         columns = {
-            columns["name"]: columns for columns in db_inspector.get_columns(table)
+            columns["name"]: columns for columns in db_inspector.get_columns(self.table)
         }
 
         assert columns["chakra"]["default"] == "100"
@@ -97,9 +98,8 @@ class TestNinjaModelStructure:
         assert columns["jinchuriki"]["default"] == "'none'::jinchurikienum"
 
     def test_column_lengths(self, db_inspector):
-        table = "ninja"
         columns = {
-            columns["name"]: columns for columns in db_inspector.get_columns(table)
+            columns["name"]: columns for columns in db_inspector.get_columns(self.table)
         }
 
         assert columns["name"]["type"].length == 20
@@ -108,6 +108,6 @@ class TestNinjaModelStructure:
         assert columns["summon_animal"]["type"].length == 20
 
     def test_unique_constraints(self, db_inspector):
-        constraints = db_inspector.get_unique_constraints("ninja")
+        constraints = db_inspector.get_unique_constraints(self.table)
 
         assert any(constraint["name"] == "uq_ninja_name" for constraint in constraints)

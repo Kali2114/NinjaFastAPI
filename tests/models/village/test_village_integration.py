@@ -2,8 +2,9 @@ import pytest
 
 from app.models.ninja import Ninja
 from app.models.village import Village
+from app.models.user import User
 from app.db_connection import SessionLocal
-from tests.models.utils import create_ninja, create_village
+from tests.models.utils import create_ninja, create_village, create_user
 from app.models import enums
 
 
@@ -11,6 +12,7 @@ class TestVillageIntegration:
 
     def setup_method(self):
         self.session = SessionLocal()
+        self.user = create_user(self.session)
         self.konoha = create_village(session=self.session)
         self.suna = create_village(
             session=self.session,
@@ -18,20 +20,29 @@ class TestVillageIntegration:
             country=enums.CountryEnum.wind,
         )
         self.hokage = create_ninja(
-            session=self.session, rank=enums.RankEnum.kage, village_id=self.konoha.id
+            user_id=self.user.id,
+            session=self.session,
+            rank=enums.RankEnum.kage,
+            village_id=self.konoha.id,
         )
         self.kazekage = create_ninja(
-            session=self.session, rank=enums.RankEnum.kage, village_id=self.suna.id
+            user_id=self.user.id,
+            session=self.session,
+            rank=enums.RankEnum.kage,
+            village_id=self.suna.id,
         )
         self.suna.set_kage(self.kazekage)
         self.ninja_konoha = create_ninja(
-            session=self.session, village_id=self.konoha.id
+            user_id=self.user.id, session=self.session, village_id=self.konoha.id
         )
-        self.ninja_suna = create_ninja(session=self.session, village_id=self.suna.id)
-        self.ninja = create_ninja(session=self.session)
+        self.ninja_suna = create_ninja(
+            user_id=self.user.id, session=self.session, village_id=self.suna.id
+        )
+        self.ninja = create_ninja(user_id=self.user.id, session=self.session)
 
     def teardown_method(self):
         self.session.query(Ninja).delete()
+        self.session.query(User).delete()
         self.session.query(Village).delete()
         self.session.commit()
         self.session.close()

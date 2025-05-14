@@ -3,18 +3,23 @@ import pytest
 from app.db_connection import SessionLocal
 from app.models.team import Team
 from app.models.ninja import Ninja
+from app.models.user import User
 from app.models.ninja import enums
-from tests.models.utils import create_ninja
+from tests.models.utils import create_ninja, create_user
 
 
 class TestTeamIntegration:
 
     def setup_method(self):
         self.session = SessionLocal()
-
-        self.ninjas = [create_ninja(self.session) for _ in range(4)]
-        self.academy = create_ninja(self.session, rank=enums.RankEnum.academy)
-        self.sensei = create_ninja(self.session, rank=enums.RankEnum.jonin)
+        self.user = create_user(self.session)
+        self.ninjas = [create_ninja(self.user.id, self.session) for _ in range(4)]
+        self.academy = create_ninja(
+            self.user.id, self.session, rank=enums.RankEnum.academy
+        )
+        self.sensei = create_ninja(
+            self.user.id, self.session, rank=enums.RankEnum.jonin
+        )
 
         self.ninjas.extend([self.academy, self.sensei])
 
@@ -26,6 +31,7 @@ class TestTeamIntegration:
 
     def teardown_method(self):
         self.session.query(Ninja).delete()
+        self.session.query(User).delete()
         self.session.query(Team).delete()
 
         self.session.commit()
