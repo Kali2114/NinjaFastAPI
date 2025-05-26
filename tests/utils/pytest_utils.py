@@ -11,3 +11,7 @@ def pytest_collection_modifyitems(items):
                 item.add_marker(pytest.mark.structure)
             if "integration" in cls_name:
                 item.add_marker(pytest.mark.integration)
+            if "unit" in cls_name:
+                item.add_marker(pytest.mark.unit)
+            if "unitschema" in cls_name:
+                item.add_marker(pytest.mark.unit_schema)

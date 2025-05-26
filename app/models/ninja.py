@@ -74,6 +74,9 @@ class Ninja(Base):
         UniqueConstraint("name", name="uq_ninja_name"),
     )
 
+    def __repr__(self):
+        return f"Ninja: {self.name} from {self.village} | LVL: {self.level} | RANK: {self.rank}"
+
     @validates("chakra_nature")
     def validate_chakra_nature(self, key, value):
         allowed = {"Fire", "Water", "Lightning", "Earth", "Wind"}
@@ -122,6 +125,10 @@ class Ninja(Base):
 
     def mark_as_dead(self):
         self.alive = False
+
+    def summon_contract(self, animal):
+        ensure_alive(self)
+        self.summon_animal = animal
 
     def mark_as_forbidden(self):
         ensure_alive(self)

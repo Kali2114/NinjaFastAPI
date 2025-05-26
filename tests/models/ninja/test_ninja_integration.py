@@ -56,6 +56,11 @@ class TestNinjaIntegration:
         self.ninja._check_level_up()
         assert self.ninja.level == expected_level
 
+    def test_summon_contract(self):
+        animal = "Eagle"
+        self.ninja.summon_contract(animal)
+        assert self.ninja.summon_animal == animal
+
     @pytest.mark.parametrize("chakra_cost, xp_gain", [(30, 2), (40, 4), (50, 1)])
     def test_train(self, monkeypatch, chakra_cost, xp_gain):
         xp_before = self.ninja.experience
