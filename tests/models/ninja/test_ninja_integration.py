@@ -9,6 +9,7 @@ from app.models import enums
 from tests.models.utils import create_ninja, create_user
 
 
+@pytest.mark.integration
 class TestNinjaIntegration:
 
     def setup_method(self):

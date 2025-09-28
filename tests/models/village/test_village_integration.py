@@ -8,6 +8,7 @@ from tests.models.utils import create_ninja, create_village, create_user
 from app.models import enums
 
 
+@pytest.mark.integration
 class TestVillageIntegration:
 
     def setup_method(self):

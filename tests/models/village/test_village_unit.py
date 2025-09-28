@@ -5,6 +5,7 @@ from app.models import enums
 from app.schemas.village_schema import VillageCreateSchema
 
 
+@pytest.mark.unit_schema
 class TestVillageUnitSchema:
 
     def test_unit_schema_village_validation(self):

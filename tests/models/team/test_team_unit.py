@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from app.schemas.team_schema import TeamCreateSchema
 
 
+@pytest.mark.unit_schema
 class TestTeamUnitSchema:
 
     def test_unit_schema_team_validation(self):

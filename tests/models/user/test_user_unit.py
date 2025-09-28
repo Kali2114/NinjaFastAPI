@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from app.schemas.user_schema import UserCreateSchema
 
 
+@pytest.mark.unit_schema
 class TestUserUnitSchema:
 
     def test_user_schema_validation(self):

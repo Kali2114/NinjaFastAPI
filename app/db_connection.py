@@ -1,6 +1,5 @@
 import os
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -23,7 +22,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 Base = declarative_base()
 
 
-@pytest.fixture
 def get_db_session():
     db = SessionLocal()
     try:

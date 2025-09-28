@@ -8,6 +8,7 @@ from app.models.ninja import enums
 from tests.models.utils import create_ninja, create_user
 
 
+@pytest.mark.integration
 class TestTeamIntegration:
 
     def setup_method(self):

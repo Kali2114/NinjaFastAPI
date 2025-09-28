@@ -1,12 +1,15 @@
 from sqlalchemy import Integer, String, Boolean, DateTime
+import pytest
 
 
+@pytest.mark.exists
 class UserModelExists:
 
     def test_table_exists(self, db_inspector):
         assert db_inspector.has_table("user")
 
 
+@pytest.mark.structure
 class TestUserModelStructure:
     table = "user"
 

@@ -1,13 +1,16 @@
 from sqlalchemy import Integer, String, Boolean, Enum as SQLAEnum
 from sqlalchemy.dialects.postgresql import ARRAY
+import pytest
 
 
+@pytest.mark.exists
 class TestNinjaModelExists:
 
     def test_table_exists(self, db_inspector):
         assert db_inspector.has_table("ninja")
 
 
+@pytest.mark.structure
 class TestNinjaModelStructure:
     table = "ninja"
 

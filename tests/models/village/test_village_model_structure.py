@@ -1,12 +1,15 @@
 from sqlalchemy import Integer, Enum as SQLAEnum
+import pytest
 
 
+@pytest.mark.exists
 class TestVillageModelExists:
 
     def test_table_exists(self, db_inspector):
         assert db_inspector.has_table("village")
 
 
+@pytest.mark.structure
 class TestVillageModelStructure:
     table = "village"
 

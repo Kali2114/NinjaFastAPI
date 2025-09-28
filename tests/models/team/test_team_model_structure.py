@@ -1,12 +1,15 @@
 from sqlalchemy import Integer, String
+import pytest
 
 
+@pytest.mark.exists
 class TestTeamModelExists:
 
     def test_table_exists(self, db_inspector):
         assert db_inspector.has_table("team")
 
 
+@pytest.mark.structure
 class TestTeamModelStructure:
     table = "team"
 
