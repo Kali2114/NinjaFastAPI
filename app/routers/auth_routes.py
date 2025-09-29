@@ -36,10 +36,10 @@ def register(user_data: UserCreateSchema, db: Session = Depends(get_db_session))
 
 
 @router.post("/login", status_code=200)
-def login(payload: UserLoginSchema, db: Session = Depends(get_db_session)):
-    user = db.query(User).filter(User.username == payload.username).first()
+def login(user_data: UserLoginSchema, db: Session = Depends(get_db_session)):
+    user = db.query(User).filter(User.username == user_data.username).first()
 
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_token({"sub": user.username})

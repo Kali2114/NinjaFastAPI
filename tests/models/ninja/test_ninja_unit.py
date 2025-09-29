@@ -65,3 +65,6 @@ class TestPublicNinjaEndpoints:
 
         assert res.status_code == 201
         assert res.json() == ninja
+
+    def test_delete_ninja_successful(self, client, monkeypatch):
+        pass
