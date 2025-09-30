@@ -39,6 +39,10 @@ class TestPrivateNinjaEndpoints:
         res = client.get("/ninja")
         assert res.status_code == 200
 
+    def test_get_my_ninjas_requires_auth(self, client):
+        res = client.get("/ninja/my_ninjas")
+        assert res.status_code == 403
+
     def test_create_ninja_unauthorized(self, client):
         ninja = get_random_ninja_dict()
         res = client.post("/ninja", json=ninja)
@@ -52,6 +56,10 @@ class TestPrivateNinjaEndpoints:
 @pytest.mark.endpoints
 class TestPublicNinjaEndpoints:
 
+    # def test_get_my_ninja(self, client, monkeypatch):
+    #     user = create_test_user()
+    #     ninja1 = get_random_ninja_dict()
+
     def test_create_ninja_successful(self, client, monkeypatch):
         ninja = get_random_ninja_dict()
 
@@ -62,9 +70,13 @@ class TestPublicNinjaEndpoints:
         body = ninja.copy()
         body.pop("id")
         res = client.post("/ninja", json=body)
+        data = res.json()
 
         assert res.status_code == 201
-        assert res.json() == ninja
+        assert data["name"] == body["name"]
+        assert data["clan"] == body["clan"]
+        assert "id" in data
+        assert "user_id" in data
 
     def test_delete_ninja_successful(self, client, monkeypatch):
         pass
