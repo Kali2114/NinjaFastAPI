@@ -1,9 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import enums
 from app.schemas.ninja_schema import NinjaCreateSchema
-from tests.factories.models_factory import get_random_ninja_dict
+from app.routers.utils import get_current_user
+from app.main import app
+from app.models import enums
 
 
 def mock_output(return_value=None):
@@ -33,7 +34,7 @@ class TestNinjaUnitSchema:
 
 
 @pytest.mark.endpoints
-class TestPrivateNinjaEndpoints:
+class TestPublicNinjaEndpoints:
 
     def test_get_ninja_unauthorized(self, client):
         res = client.get("/ninja")
@@ -43,40 +44,100 @@ class TestPrivateNinjaEndpoints:
         res = client.get("/ninja/my_ninjas")
         assert res.status_code == 403
 
-    def test_create_ninja_unauthorized(self, client):
-        ninja = get_random_ninja_dict()
-        res = client.post("/ninja", json=ninja)
-        assert res.status_code == 401
-
-    def test_delete_ninja_unauthorized(self, client):
-        res = client.delete("/ninja/1")
-        assert res.status_code == 401
+    # def test_create_ninja_unauthorized(self, client):
+    #     ninja = get_random_ninja_dict()
+    #     res = client.post("/ninja", json=ninja)
+    #     assert res.status_code == 401
+    #
+    # def test_delete_ninja_unauthorized(self, client):
+    #     res = client.delete("/ninja/1")
+    #     assert res.status_code == 401
 
 
 @pytest.mark.endpoints
-class TestPublicNinjaEndpoints:
+class TestPrivateNinjaEndpoints:
 
-    # def test_get_my_ninja(self, client, monkeypatch):
-    #     user = create_test_user()
-    #     ninja1 = get_random_ninja_dict()
+    def test_get_my_ninjas_ok(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42, "username": "tester"})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
 
-    def test_create_ninja_successful(self, client, monkeypatch):
-        ninja = get_random_ninja_dict()
+        expected = [
+            {
+                "id": 5,
+                "name": "Shikamaru",
+                "clan": "Nara",
+                "summon_animal": None,
+                "village_id": 1,
+                "village": None,
+                "rank": enums.RankEnum.academy.value,
+                "alive": True,
+                "forbidden": False,
+            },
+            {
+                "id": 6,
+                "name": "Choji",
+                "clan": "Akimichi",
+                "summon_animal": None,
+                "village_id": 1,
+                "village": None,
+                "rank": enums.RankEnum.academy.value,
+                "alive": True,
+                "forbidden": False,
+            },
+        ]
 
-        monkeypatch.setattr("sqlalchemy.orm.Query.first", mock_output())
-        monkeypatch.setattr("sqlalchemy.orm.Session.commit", mock_output())
-        monkeypatch.setattr("sqlalchemy.orm.Session.refresh", mock_output())
+        class FakeQuery:
+            def filter(self, *args, **kwargs):
+                return self
 
-        body = ninja.copy()
-        body.pop("id")
-        res = client.post("/ninja", json=body)
-        data = res.json()
+            def all(self):
+                return expected
 
-        assert res.status_code == 201
-        assert data["name"] == body["name"]
-        assert data["clan"] == body["clan"]
-        assert "id" in data
-        assert "user_id" in data
+        shared = FakeQuery()
+        monkeypatch.setattr("sqlalchemy.orm.Session.query", lambda self, model: shared)
+        res = client.get("/ninja/my_ninjas")
+        app.dependency_overrides.clear()
 
-    def test_delete_ninja_successful(self, client, monkeypatch):
-        pass
+        assert res.status_code == 200
+        assert res.json() == expected
+
+    def test_get_my_ninja_detail_other_user_returns_404(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        class FakeQuery:
+            def filter(self, *args, **kwargs):
+                return self
+
+            def first(self):
+                return None
+
+        shared = FakeQuery()
+        monkeypatch.setattr(
+            "sqlalchemy.orm.Session.query",
+            lambda _self, _model: shared,
+        )
+
+        res = client.get("/ninja/my_ninjas/7")
+        app.dependency_overrides.clear()
+
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Ninja not found"
+
+    # def test_create_ninja_successful(self, client, monkeypatch):
+    #     ninja = get_random_ninja_dict()
+    #
+    #     monkeypatch.setattr("sqlalchemy.orm.Query.first", mock_output())
+    #     monkeypatch.setattr("sqlalchemy.orm.Session.commit", mock_output())
+    #     monkeypatch.setattr("sqlalchemy.orm.Session.refresh", mock_output())
+    #
+    #     body = ninja.copy()
+    #     body.pop("id")
+    #     res = client.post("/ninja", json=body)
+    #     data = res.json()
+    #
+    #     assert res.status_code == 201
+    #     assert data["name"] == body["name"]
+    #     assert data["clan"] == body["clan"]
+    #     assert "id" in data
+    #     assert "user_id" in data

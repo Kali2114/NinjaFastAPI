@@ -31,9 +31,6 @@ def get_my_ninja(
     db: Session = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ):
-    ninja = db.query(Ninja).filter(Ninja.id == ninja_id).first()
-    if not ninja:
-        raise HTTPException(status_code=404, detail="Ninja not found")
     ninja = (
         db.query(Ninja).filter(Ninja.id == ninja_id, Ninja.user_id == user.id).first()
     )
