@@ -3,7 +3,6 @@ from faker import Faker
 from app.models import User
 from app.auth.hashing import hash_password
 
-
 faker = Faker()
 
 

@@ -3,8 +3,10 @@ from pydantic import ValidationError
 
 from app.schemas.ninja_schema import NinjaCreateSchema
 from app.routers.utils import get_current_user
+from app.db_connection import get_db_session
 from app.main import app
 from app.models import enums
+from tests.factories.models_factory import get_random_ninja_dict
 
 
 def mock_output(return_value=None):
@@ -44,10 +46,11 @@ class TestPublicNinjaEndpoints:
         res = client.get("/ninja/my_ninjas")
         assert res.status_code == 403
 
-    # def test_create_ninja_unauthorized(self, client):
-    #     ninja = get_random_ninja_dict()
-    #     res = client.post("/ninja", json=ninja)
-    #     assert res.status_code == 401
+    def test_create_ninja_unauthorized(self, client):
+        ninja = get_random_ninja_dict()
+        res = client.post("/ninja", json=ninja)
+        assert res.status_code == 403
+
     #
     # def test_delete_ninja_unauthorized(self, client):
     #     res = client.delete("/ninja/1")
@@ -124,20 +127,43 @@ class TestPrivateNinjaEndpoints:
         assert res.status_code == 404
         assert res.json()["detail"] == "Ninja not found"
 
-    # def test_create_ninja_successful(self, client, monkeypatch):
-    #     ninja = get_random_ninja_dict()
-    #
-    #     monkeypatch.setattr("sqlalchemy.orm.Query.first", mock_output())
-    #     monkeypatch.setattr("sqlalchemy.orm.Session.commit", mock_output())
-    #     monkeypatch.setattr("sqlalchemy.orm.Session.refresh", mock_output())
-    #
-    #     body = ninja.copy()
-    #     body.pop("id")
-    #     res = client.post("/ninja", json=body)
-    #     data = res.json()
-    #
-    #     assert res.status_code == 201
-    #     assert data["name"] == body["name"]
-    #     assert data["clan"] == body["clan"]
-    #     assert "id" in data
-    #     assert "user_id" in data
+    def test_create_ninja_successful(self, client, monkeypatch):
+
+        fake_user = type("User", (), {"id": 42, "username": "tester"})
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        class FakeSession:
+            def add(self, obj):
+                obj.id = 123
+                obj.user_id = 42
+                if getattr(obj, "village_id", None) is None:
+                    obj.village_id = 1
+                if getattr(obj, "alive", None) is None:
+                    obj.alive = True
+                if getattr(obj, "forbidden", None) is None:
+                    obj.forbidden = False
+                if getattr(obj, "rank", None) is None:
+                    obj.rank = enums.RankEnum.academy
+
+            def flush(self):
+                pass
+
+            def commit(self):
+                pass
+
+            def refresh(self, obj=None):
+                pass
+
+        app.dependency_overrides[get_db_session] = lambda: FakeSession()
+
+        body = get_random_ninja_dict().copy()
+        body.pop("id", None)
+        res = client.post("/ninja", json=body)
+        data = res.json()
+
+        assert res.status_code == 201
+        assert data["name"] == body["name"]
+        assert data["clan"] == body["clan"]
+        assert "id" in data
+
+        app.dependency_overrides.clear()
