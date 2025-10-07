@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
@@ -52,3 +52,27 @@ def create_ninja(
     db.flush()
 
     return ninja
+
+
+@router.delete("/my_ninjas/{ninja_id}", status_code=204)
+def delete_ninja(
+    ninja_id: int,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+):
+    ninja = (
+        db.query(Ninja)
+        .filter(
+            Ninja.id == ninja_id,
+            Ninja.user_id == user.id,
+        )
+        .first()
+    )
+
+    if not ninja:
+        raise HTTPException(status_code=404, detail="Ninja not found")
+
+    db.delete(Ninja)
+    db.flush()
+
+    return Response(status_code=204)

@@ -51,10 +51,13 @@ class TestPublicNinjaEndpoints:
         res = client.post("/ninja", json=ninja)
         assert res.status_code == 403
 
-    #
-    # def test_delete_ninja_unauthorized(self, client):
-    #     res = client.delete("/ninja/1")
-    #     assert res.status_code == 401
+    def test_delete_ninja_unauthorized(self, client):
+        res = client.delete("/ninja/my_ninjas/1")
+        assert res.status_code == 403
+
+    def test_edit_ninja_unauthorized(self, client):
+        res = client.put("/ninja/my_ninjas/2", json={"name": "X", "clan": "Y"})
+        assert res.status_code == 405
 
 
 @pytest.mark.endpoints
@@ -167,3 +170,80 @@ class TestPrivateNinjaEndpoints:
         assert "id" in data
 
         app.dependency_overrides.clear()
+
+    def test_delete_my_ninja_successful(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42, "username": "Tester"})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        deleted = {"called": False}
+
+        class FakeQuery:
+            def filter(self, *_, **__):
+                return self
+
+            def first(self):
+                return type("NinjaObj", (), {"id": 7, "user_id": 42})()
+
+        class FakeSession:
+            def query(self, model):
+                return FakeQuery()
+
+            def delete(self, obj):
+                deleted["called"] = True
+
+            def flush(self):
+                pass
+
+            def commit(self):
+                pass
+
+            def refresh(self, obj=None):
+                pass
+
+        app.dependency_overrides[get_db_session] = lambda: FakeSession()
+
+        res = client.delete("/ninja/my_ninjas/7")
+        app.dependency_overrides.clear()
+
+        assert res.status_code == 204
+        assert deleted["called"] is True
+
+    def test_delete_other_ninja_fail(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42, "username": "tester"})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        class FakeQuery:
+            def filter(self, *_, **__):
+                return self
+
+            def first(self):
+                return None
+
+        class FakeSession:
+            def query(self, model):
+                return FakeQuery()
+
+            def delete(self, obj):
+                pass
+
+            def flush(self):
+                pass
+
+        app.dependency_overrides[get_db_session] = lambda: FakeSession()
+
+        res = client.delete("/ninja/my_ninjas/7")
+        app.dependency_overrides.clear()
+
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Ninja not found"
+
+    def test_edit_ninja_fail(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42, "username": "tester"})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        res = client.put(
+            "/ninja/my_ninjas/7", json={"name": "Kakashi", "clan": "Hatake"}
+        )
+        app.dependency_overrides.clear()
+
+        assert res.status_code == 405
