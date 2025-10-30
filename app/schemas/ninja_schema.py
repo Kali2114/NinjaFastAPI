@@ -1,4 +1,4 @@
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, StringConstraints, ConfigDict
 
 from typing import Annotated, Optional
 
@@ -25,6 +25,7 @@ class NinjaPublicReadSchema(NinjaBase):
     rank: enums.RankEnum
     alive: bool
     forbidden: bool
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NinjaPrivateReadSchema(NinjaPublicReadSchema):
@@ -33,9 +34,7 @@ class NinjaPrivateReadSchema(NinjaPublicReadSchema):
     mission_completed: int
     chakra: int
     team_id: Optional[int] = None
-    team: int
     user_id: int
-    user: int
     sensei: Optional[str] = None
     kekkei_genkai: enums.KekkeiGenkaiEnum
     chakra_nature: Optional[list[str]] = None

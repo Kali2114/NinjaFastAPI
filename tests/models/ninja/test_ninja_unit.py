@@ -132,7 +132,7 @@ class TestPrivateNinjaEndpoints:
 
     def test_create_ninja_successful(self, client, monkeypatch):
 
-        fake_user = type("User", (), {"id": 42, "username": "tester"})
+        fake_user = type("User", (), {"id": 42, "username": "tester"})()
         app.dependency_overrides[get_current_user] = lambda: fake_user
 
         class FakeSession:

@@ -16,7 +16,7 @@ import random
 
 from app.models import enums
 from app.db_connection import Base
-from .utils import ensure_alive
+from app.models.utils import ensure_alive
 
 
 class Ninja(Base):

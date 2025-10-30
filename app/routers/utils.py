@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
-from app.models import User
+from app.models import User, Ninja
 from app.auth.token_utils import SECRET_KEY, ALGORITHM
 
 security = HTTPBearer()
@@ -35,3 +35,14 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
+
+
+def find_ninja(db: Session, ninja_id: int, user_id: int, *, for_update: bool = False):
+    q = db.query(Ninja).filter(Ninja.id == ninja_id, Ninja.user_id == user_id)
+    if for_update:
+        q = q.with_for_update()
+    ninja = q.first()
+    if not ninja:
+        raise HTTPException(404, "Ninja not found")
+
+    return ninja
