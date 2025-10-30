@@ -20,8 +20,8 @@ class NinjaCreateSchema(NinjaBase):
 
 class NinjaPublicReadSchema(NinjaBase):
     id: int
-    village_id: int
-    village: Optional[VillageReadSchema]
+    village_id: Optional[int] = None
+    village: Optional[VillageReadSchema] = None
     rank: enums.RankEnum
     alive: bool
     forbidden: bool
