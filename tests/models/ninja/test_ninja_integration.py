@@ -104,7 +104,8 @@ class TestNinjaIntegration:
     def test_check_chakra(self, lvl, expected_chakra):
         self.ninja.level = lvl
         self.ninja._check_chakra_level()
-        self.ninja.chakra = expected_chakra
+
+        assert self.ninja.chakra == expected_chakra
 
     @pytest.mark.parametrize(
         "chakra, is_valid",

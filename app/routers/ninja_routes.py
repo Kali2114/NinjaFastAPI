@@ -72,7 +72,7 @@ def delete_ninja(
     if not ninja:
         raise HTTPException(status_code=404, detail="Ninja not found")
 
-    db.delete(Ninja)
+    db.delete(ninja)
     db.flush()
 
     return Response(status_code=204)

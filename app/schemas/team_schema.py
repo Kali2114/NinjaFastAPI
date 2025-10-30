@@ -16,4 +16,4 @@ class TeamReadSchema(TeamBaseSchema):
 
 
 class TeamCreateSchema(TeamBaseSchema):
-    pass
+    sensei_id: int
