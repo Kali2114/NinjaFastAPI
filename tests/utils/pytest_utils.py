@@ -15,3 +15,5 @@ def pytest_collection_modifyitems(items):
                 item.add_marker(pytest.mark.unit)
             if "unitschema" in cls_name:
                 item.add_marker(pytest.mark.unit_schema)
+            if "endpoints" in cls_name:
+                item.add_marker(pytest.mark.endpoints)

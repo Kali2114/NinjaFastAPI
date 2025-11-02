@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 import pytest
 
 from app.main import app
@@ -32,3 +32,15 @@ def client_authed(db_session, setup_user):
 
     app.dependency_overrides.clear()
     session.close()
+
+
+@pytest.fixture(autouse=True, scope="function")
+def _clean_db_before_test(db_session):
+    s = db_session()
+    try:
+        s.execute(text("DELETE FROM ninja"))
+        s.execute(text('DELETE FROM "user"'))
+        s.commit()
+    finally:
+        s.close()
+    yield
