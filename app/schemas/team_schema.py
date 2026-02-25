@@ -16,4 +16,4 @@ class TeamReadSchema(TeamBaseSchema):
 
 
 class TeamCreateSchema(TeamBaseSchema):
-    sensei_id: int
+    sensei_id: Optional[int] = None

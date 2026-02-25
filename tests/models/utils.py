@@ -1,4 +1,5 @@
-import random
+import uuid
+
 from app.models.ninja import Ninja
 from app.models.village import Village
 from app.models.user import User
@@ -7,7 +8,7 @@ from app.models import enums
 
 def create_ninja(user_id, session, **params):
     defaults = {
-        "name": f"Ninja{random.randint(1, 9999)}",
+        "name": f"Ninja{uuid.uuid4().hex[:8]}",
         "clan": "Test",
         "rank": enums.RankEnum.genin,
         "jinchuriki": enums.JinchurikiEnum.none,

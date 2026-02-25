@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
-from app.models import Ninja
+from app.models import Ninja, User
 from app.schemas.ninja_schema import NinjaPublicReadSchema, NinjaCreateSchema
 from app.routers.utils import get_current_user, find_ninja
-from app.models import User
 
 
 router = APIRouter()
