@@ -1,5 +1,4 @@
 import pytest
-
 import random
 
 from app.models.ninja import Ninja
@@ -10,12 +9,12 @@ from tests.models.utils import create_ninja, create_user
 
 
 @pytest.mark.integration
-class TestNinjaIntegration:
+class TestNinjaModelIntegration:
 
     def setup_method(self):
         self.session = SessionLocal()
         self.user = create_user(self.session)
-        self.ninja = create_ninja(self.user.id, self.session)
+        self.ninja = create_ninja(session=self.session, user_id=self.user.id)
 
     def teardown_method(self):
         self.session.query(Ninja).delete()
@@ -67,10 +66,11 @@ class TestNinjaIntegration:
         xp_before = self.ninja.experience
         seq = iter([chakra_cost, xp_gain])
         monkeypatch.setattr(random, "randint", lambda *args, **kwargs: next(seq))
+
         self.ninja.train()
 
         assert self.ninja.chakra == 100 - chakra_cost
-        assert xp_before < self.ninja.experience <= xp_before + 4
+        assert self.ninja.experience == xp_before + xp_gain
 
     @pytest.mark.parametrize(
         "level, expected_chakra",
@@ -90,6 +90,7 @@ class TestNinjaIntegration:
     def test_rest_restores_max_chakra(self, level, expected_chakra):
         self.ninja.level = level
         self.ninja.chakra = 50
+
         self.ninja.rest()
 
         assert self.ninja.chakra == expected_chakra
@@ -134,7 +135,7 @@ class TestNinjaIntegration:
     def test_invalid_change_rank(self):
         with pytest.raises(ValueError) as e:
             self.ninja.change_rank("Error")
-        assert "Invalid rank" in str(e)
+        assert "Invalid rank" in str(e.value)
 
     @pytest.mark.parametrize(
         "method_name, args, kwargs",
@@ -147,61 +148,87 @@ class TestNinjaIntegration:
     def test_methods_fail_when_dead(self, method_name, args, kwargs):
         self.ninja.mark_as_dead()
         method = getattr(self.ninja, method_name)
+
         with pytest.raises(RuntimeError, match="Ninja is dead"):
             method(*args, **kwargs)
 
+
+@pytest.mark.integration
+class TestNinjaActionEndpointsIntegration:
+
     def test_train_happy_path(self, client_authed, db_session, setup_user, monkeypatch):
         session = db_session()
-
         ninja = create_ninja(
-            session=session, user_id=setup_user.id, chakra=100, experience=0, level=1
+            session=session,
+            user_id=setup_user.id,
+            chakra=100,
+            experience=0,
+            level=1,
         )
+        ninja_id = ninja.id
+        session.close()
 
         seq = iter([35, 3])
         monkeypatch.setattr(
             "app.models.ninja.random.randint", lambda *args, **kwargs: next(seq)
         )
 
-        res = client_authed.post(f"/ninja/my_ninjas/{ninja.id}/train")
+        res = client_authed.post(f"/ninja/my_ninjas/{ninja_id}/train")
         assert res.status_code == 200
 
-        session.refresh(ninja)
-        assert ninja.chakra == 65
-        assert ninja.experience == 3
+        verify_session = db_session()
+        fresh_ninja = verify_session.query(Ninja).filter(Ninja.id == ninja_id).first()
+        assert fresh_ninja.chakra == 65
+        assert fresh_ninja.experience == 3
+        verify_session.close()
 
     def test_train_dead_returns_409(self, client_authed, db_session, setup_user):
         session = db_session()
         ninja = create_ninja(
-            session=session, user_id=setup_user.id, chakra=100, level=1
+            session=session,
+            user_id=setup_user.id,
+            chakra=100,
+            level=1,
         )
         ninja.alive = False
         session.commit()
+        ninja_id = ninja.id
+        session.close()
 
-        res = client_authed.post(f"/ninja/my_ninjas/{ninja.id}/train")
+        res = client_authed.post(f"/ninja/my_ninjas/{ninja_id}/train")
         assert res.status_code == 409
         assert res.json()["detail"] == "Ninja is dead"
 
-        session.refresh(ninja)
-        assert ninja.experience == 0
-        assert ninja.chakra == 100
-        session.close()
+        verify_session = db_session()
+        fresh_ninja = verify_session.query(Ninja).filter(Ninja.id == ninja_id).first()
+        assert fresh_ninja.experience == 0
+        assert fresh_ninja.chakra == 100
+        verify_session.close()
 
     def test_train_not_enough_chakra_returns_400(
         self, client_authed, db_session, setup_user, monkeypatch
     ):
         session = db_session()
-        ninja = create_ninja(session=session, user_id=setup_user.id, chakra=20, level=1)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            chakra=20,
+            level=1,
+        )
+        ninja_id = ninja.id
+        session.close()
 
         monkeypatch.setattr("app.models.ninja.random.randint", lambda *_: 40)
 
-        res = client_authed.post(f"/ninja/my_ninjas/{ninja.id}/train")
+        res = client_authed.post(f"/ninja/my_ninjas/{ninja_id}/train")
         assert res.status_code == 400
         assert res.json()["detail"] == "Not enough chakra"
 
-        session.refresh(ninja)
-        assert ninja.experience == 0
-        assert ninja.chakra == 20
-        session.close()
+        verify_session = db_session()
+        fresh_ninja = verify_session.query(Ninja).filter(Ninja.id == ninja_id).first()
+        assert fresh_ninja.experience == 0
+        assert fresh_ninja.chakra == 20
+        verify_session.close()
 
     def test_train_not_my_ninja_returns_404(
         self, client_authed, db_session, setup_user
@@ -209,15 +236,21 @@ class TestNinjaIntegration:
         session = db_session()
         other = create_user(
             session=session,
-            username="Testr",
+            username="testr",
             email="test@example.com",
         )
-        foreign = create_ninja(session=session, user_id=other.id, chakra=100, level=1)
+        foreign = create_ninja(
+            session=session,
+            user_id=other.id,
+            chakra=100,
+            level=1,
+        )
+        foreign_id = foreign.id
+        session.close()
 
-        res = client_authed.post(f"/ninja/my_ninjas/{foreign.id}/train")
+        res = client_authed.post(f"/ninja/my_ninjas/{foreign_id}/train")
         assert res.status_code == 404
         assert res.json()["detail"] == "Ninja not found"
-        session.close()
 
     def test_rest_happy_path_sets_max_chakra(
         self, client_authed, db_session, setup_user
@@ -225,41 +258,63 @@ class TestNinjaIntegration:
         session = db_session()
         lvl = 4
         ninja = create_ninja(
-            session=session, user_id=setup_user.id, chakra=1, level=lvl
+            session=session,
+            user_id=setup_user.id,
+            chakra=1,
+            level=lvl,
         )
+        ninja_id = ninja.id
+        session.close()
 
-        res = client_authed.post(f"/ninja/my_ninjas/{ninja.id}/rest")
+        res = client_authed.post(f"/ninja/my_ninjas/{ninja_id}/rest")
         assert res.status_code == 200
 
-        session.refresh(ninja)
-        assert ninja.chakra == enums.CHAKRA_THRESHOLDS[lvl]
-        session.close()
+        verify_session = db_session()
+        fresh_ninja = verify_session.query(Ninja).filter(Ninja.id == ninja_id).first()
+        assert fresh_ninja.chakra == enums.CHAKRA_THRESHOLDS[lvl]
+        verify_session.close()
 
     def test_rest_dead_returns_409(self, client_authed, db_session, setup_user):
         session = db_session()
         ninja = create_ninja(
-            session=session, user_id=setup_user.id, chakra=100, level=1
+            session=session,
+            user_id=setup_user.id,
+            chakra=100,
+            level=1,
         )
         ninja.alive = False
         session.commit()
+        ninja_id = ninja.id
+        session.close()
 
-        res = client_authed.post(f"/ninja/my_ninjas/{ninja.id}/rest")
+        res = client_authed.post(f"/ninja/my_ninjas/{ninja_id}/rest")
         assert res.status_code == 409
         assert res.json()["detail"] == "Ninja is dead"
 
-        session.refresh(ninja)
-        assert ninja.chakra == 100
-        session.close()
+        verify_session = db_session()
+        fresh_ninja = verify_session.query(Ninja).filter(Ninja.id == ninja_id).first()
+        assert fresh_ninja.chakra == 100
+        verify_session.close()
 
     def test_rest_not_my_ninja_returns_404(self, client_authed, db_session, setup_user):
         session = db_session()
-        other = create_user(session, username="Tester", email="test@example.com")
-        foreign = create_ninja(session=session, user_id=other.id, chakra=50, level=3)
+        other = create_user(
+            session=session,
+            username="tester",
+            email="test@example.com",
+        )
+        foreign = create_ninja(
+            session=session,
+            user_id=other.id,
+            chakra=50,
+            level=3,
+        )
+        foreign_id = foreign.id
+        session.close()
 
-        res = client_authed.post(f"/ninja/my_ninjas/{foreign.id}/rest")
+        res = client_authed.post(f"/ninja/my_ninjas/{foreign_id}/rest")
         assert res.status_code == 404
         assert res.json()["detail"] == "Ninja not found"
-        session.close()
 
 
 @pytest.mark.endpoints
@@ -267,41 +322,76 @@ class TestNinjaEndpointsIntegration:
 
     def test_get_all_ninjas_public_ok(self, client, db_session, setup_user):
         session = db_session()
-        u2 = create_user(session=session, username="Tester", email="tester@example.com")
-        n1 = create_ninja(
-            session=session, user_id=setup_user.id, name="Shika", clan="Nara"
+        u2 = create_user(
+            session=session,
+            username="tester2",
+            email="tester2@example.com",
         )
-        n2 = create_ninja(session=session, user_id=u2.id, name="Kiba", clan="Inuzuka")
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            clan="Nara",
+        )
+        n2 = create_ninja(
+            session=session,
+            user_id=u2.id,
+            name="Kiba",
+            clan="Inuzuka",
+        )
 
         res = client.get("/ninja")
         assert res.status_code == 200
+
         ids = {row["id"] for row in res.json()}
         assert ids.issuperset({n1.id, n2.id})
         session.close()
 
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()
-        u2 = create_user(session=session, username="tester", email="tester@example.com")
+        u2 = create_user(
+            session=session,
+            username="tester",
+            email="tester@example.com",
+        )
         n1 = create_ninja(
-            session=session, user_id=setup_user.id, name="Shika", clan="Nara"
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            clan="Nara",
         )
         n2 = create_ninja(
-            session=session, user_id=setup_user.id, name="Kiba", clan="Inuzuka"
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            clan="Inuzuka",
         )
-        _ = create_ninja(session=session, user_id=u2.id, name="Shino", clan="Aburame")
+        create_ninja(
+            session=session,
+            user_id=u2.id,
+            name="Shino",
+            clan="Aburame",
+        )
+
         res = client_authed.get("/ninja/my_ninjas")
+        assert res.status_code == 200
+
         ids = {row["id"] for row in res.json()}
         assert ids == {n1.id, n2.id}
         session.close()
 
     def test_get_my_ninja_detail_ok(self, client_authed, db_session, setup_user):
         session = db_session()
-        n = create_ninja(
-            session=session, user_id=setup_user.id, name="Shika", clan="Nara"
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            clan="Nara",
         )
-        res = client_authed.get(f"/ninja/my_ninjas/{n.id}")
+
+        res = client_authed.get(f"/ninja/my_ninjas/{ninja.id}")
         assert res.status_code == 200
-        assert res.json()["id"] == n.id
+        assert res.json()["id"] == ninja.id
         session.close()
 
     def test_get_my_ninja_detail_404_for_other_or_missing(
@@ -309,10 +399,15 @@ class TestNinjaEndpointsIntegration:
     ):
         session = db_session()
         other = create_user(
-            session=session, username="tester", email="test@example.com"
+            session=session,
+            username="tester",
+            email="test@example.com",
         )
         foreign = create_ninja(
-            session=session, user_id=other.id, name="Neji", clan="Hyuga"
+            session=session,
+            user_id=other.id,
+            name="Neji",
+            clan="Hyuga",
         )
 
         res1 = client_authed.get(f"/ninja/my_ninjas/{foreign.id}")
@@ -324,35 +419,55 @@ class TestNinjaEndpointsIntegration:
         session.close()
 
     def test_create_ninja_logged_user(self, client_authed, db_session, setup_user):
-        session = db_session()
         payload = {"name": "test", "clan": "testers"}
 
         res = client_authed.post("/ninja", json=payload)
         assert res.status_code == 201
         assert res.json()["name"] == payload["name"]
         assert res.json()["clan"] == payload["clan"]
-        session.close()
+
+        verify_session = db_session()
+        created = (
+            verify_session.query(Ninja).filter(Ninja.name == payload["name"]).first()
+        )
+        assert created is not None
+        assert created.user_id == setup_user.id
+        verify_session.close()
 
     def test_delete_my_ninja_204_and_gone(self, client_authed, db_session, setup_user):
         session = db_session()
-        n = create_ninja(
+        ninja = create_ninja(
             session=session,
             user_id=setup_user.id,
             name="Isso",
             clan="X",
         )
-        idx = n.id
-        res = client_authed.delete(f"/ninja/my_ninjas/{n.id}")
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.delete(f"/ninja/my_ninjas/{ninja_id}")
         assert res.status_code == 204
-        session.expire_all()
-        assert db_session().get(Ninja, idx) is None
+
+        verify_session = db_session()
+        assert verify_session.get(Ninja, ninja_id) is None
+        verify_session.close()
 
     def test_delete_other_ninja_404(self, client_authed, db_session, setup_user):
         session = db_session()
-        other = create_user(session=session, username="tester", email="tester@info.com")
-        n = create_ninja(session=session, user_id=other.id, name="Sussy", clan="X")
+        other = create_user(
+            session=session,
+            username="tester",
+            email="tester@info.com",
+        )
+        ninja = create_ninja(
+            session=session,
+            user_id=other.id,
+            name="Sussy",
+            clan="X",
+        )
+        ninja_id = ninja.id
+        session.close()
 
-        res = client_authed.delete(f"/ninja/my_ninjas/{n.id}")
+        res = client_authed.delete(f"/ninja/my_ninjas/{ninja_id}")
         assert res.status_code == 404
         assert res.json()["detail"] == "Ninja not found"
-        session.close()

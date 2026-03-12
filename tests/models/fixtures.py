@@ -3,7 +3,6 @@ from sqlalchemy import inspect, text
 import pytest
 
 from app.main import app
-from app.db_connection import get_db_session
 from app.routers.utils import get_current_user
 
 
@@ -13,33 +12,22 @@ def db_inspector(db_session):
 
 
 @pytest.fixture(scope="function")
-def client_authed(db_session, setup_user):
-    session = db_session()
+def client_authed(setup_user):
+    fake_user = type("UserCtx", (), {"id": setup_user.id})()
 
-    def _db_override():
-        try:
-            yield session
-            session.commit()
-        except:
-            session.rollback()
-            raise
-
-    app.dependency_overrides[get_db_session] = _db_override
-    app.dependency_overrides[get_current_user] = lambda: setup_user
+    app.dependency_overrides[get_current_user] = lambda: fake_user
 
     with TestClient(app) as c:
         yield c
 
     app.dependency_overrides.clear()
-    session.close()
 
 
 @pytest.fixture(autouse=True, scope="function")
 def _clean_db_before_test(db_session):
     s = db_session()
     try:
-        s.execute(text("DELETE FROM ninja"))
-        s.execute(text('DELETE FROM "user"'))
+        s.execute(text('TRUNCATE ninja, team, "user" RESTART IDENTITY CASCADE'))
         s.commit()
     finally:
         s.close()

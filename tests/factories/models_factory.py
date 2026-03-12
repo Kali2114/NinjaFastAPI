@@ -24,7 +24,7 @@ def get_random_ninja_dict():
 
 
 def create_test_user(db_session, username=None, password="test_pass", email=None):
-    username = username or faker.name()
+    username = username or faker.user_name()[:30]
     email = email or faker.email()
     user = User(username=username, hashed_password=hash_password(password), email=email)
     db_session.add(user)

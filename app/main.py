@@ -2,10 +2,7 @@ from fastapi import FastAPI
 from pathlib import Path
 import logging.config
 
-from app.routers import (
-    auth_routes,
-    ninja_routes,
-)
+from app.routers import auth_routes, ninja_routes, team_routes
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,3 +14,4 @@ logging.config.fileConfig(logging_conf_path, disable_existing_loggers=False)
 app = FastAPI()
 app.include_router(auth_routes.router, prefix="/auth", tags=["auth"])
 app.include_router(ninja_routes.router, prefix="/ninja", tags=["ninja"])
+app.include_router(team_routes.router, prefix="/team", tags=["team"])

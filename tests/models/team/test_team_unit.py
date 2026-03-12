@@ -50,7 +50,7 @@ class TestTeamUnitSchema:
         app.dependency_overrides[get_current_user] = lambda: fake_user
 
         class FakeSession:
-            def add(self):
+            def add(self, obj):
                 raise ValueError("Duplicate team name.")
 
             def flush(self):
@@ -62,7 +62,7 @@ class TestTeamUnitSchema:
             def refresh(self, obj=None):
                 pass
 
-        app.dependency_overrides[get_db_session] = FakeSession()
+        app.dependency_overrides[get_db_session] = lambda: FakeSession()
 
         payload = {"name": "Team 1"}
         res = client.post("/team", json=payload)

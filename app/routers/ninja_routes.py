@@ -69,7 +69,7 @@ def train_ninja(
     db: Session = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ):
-    ninja = find_ninja(db, ninja_id, user.id, for_update=True)
+    ninja = find_ninja(db, ninja_id, user.id)
     try:
         ninja.train()
     except RuntimeError as e:
