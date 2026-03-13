@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
-from app.models import User, Ninja
+from app.models import User, Ninja, Team
 from app.auth.token_utils import SECRET_KEY, ALGORITHM
 
 security = HTTPBearer()
@@ -46,3 +46,14 @@ def find_ninja(db: Session, ninja_id: int, user_id: int, *, for_update: bool = F
         raise HTTPException(404, "Ninja not found")
 
     return ninja
+
+
+def find_team(db: Session, team_id: int, for_update: bool = False):
+    q = db.query(Team).filter(Team.id == team_id)
+    if for_update:
+        q = q.with_for_update()
+    team = q.first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+
+    return team

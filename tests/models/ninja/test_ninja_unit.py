@@ -107,6 +107,41 @@ class TestPrivateNinjaEndpoints:
         assert res.status_code == 200
         assert res.json() == expected
 
+    def test_get_my_ninja_detail_ok(self, client, monkeypatch):
+        fake_user = type("User", (), {"id": 42, "username": "tester"})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        expected = {
+            "id": 7,
+            "name": "Shikamaru",
+            "clan": "Nara",
+            "summon_animal": None,
+            "village_id": 1,
+            "village": None,
+            "rank": enums.RankEnum.academy.value,
+            "alive": True,
+            "forbidden": False,
+        }
+
+        class FakeQuery:
+            def filter(self, *args, **kwargs):
+                return self
+
+            def first(self):
+                return expected
+
+        shared = FakeQuery()
+        monkeypatch.setattr(
+            "sqlalchemy.orm.Session.query",
+            lambda _self, _model: shared,
+        )
+
+        res = client.get("/ninja/my_ninjas/7")
+        app.dependency_overrides.clear()
+
+        assert res.status_code == 200
+        assert res.json() == expected
+
     def test_get_my_ninja_detail_other_user_returns_404(self, client, monkeypatch):
         fake_user = type("User", (), {"id": 42})()
         app.dependency_overrides[get_current_user] = lambda: fake_user

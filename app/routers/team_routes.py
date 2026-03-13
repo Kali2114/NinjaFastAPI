@@ -6,7 +6,7 @@ from app.db_connection import get_db_session
 from app.models import Team, User, Ninja
 from app.models import enums
 from app.schemas.team_schema import TeamReadSchema, TeamCreateSchema
-from app.routers.utils import get_current_user
+from app.routers.utils import get_current_user, find_team
 
 
 router = APIRouter()
@@ -15,6 +15,12 @@ router = APIRouter()
 @router.get("", response_model=list[TeamReadSchema], status_code=200)
 def get_all_teams(db: Session = Depends(get_db_session)):
     return db.query(Team).all()
+
+
+@router.get("/{team_id}", response_model=TeamReadSchema, status_code=200)
+def get_detail_team(team_id: int, db: Session = Depends(get_db_session)):
+    team = find_team(db, team_id)
+    return team
 
 
 @router.post("", response_model=TeamReadSchema, status_code=201)
@@ -39,3 +45,13 @@ def create_team(
         raise HTTPException(status_code=409, detail="Duplicate")
 
     return team
+
+
+@router.put("/{team_id}", status_code=403)
+def edit_team_forbidden(team_id: int):
+    raise HTTPException(status_code=403, detail="Editing teams is not allowed")
+
+
+@router.delete("/{team_id}", status_code=403)
+def delete_team_forbidden(team_id: int):
+    raise HTTPException(status_code=403, detail="Deleting teams is not allowed")

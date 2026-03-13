@@ -70,3 +70,23 @@ class TestTeamUnitSchema:
         assert res.json()["detail"].lower().startswith("duplicate")
 
         app.dependency_overrides.clear()
+
+    def test_edit_team_forbidden(self, client):
+        fake_user = type("User", (), {"id": 15})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        res = client.patch("/team/7")
+        assert res.status_code == 403
+        assert res.json()["detail"] == "Editing teams is not allowed"
+
+        app.dependency_overrides.clear()
+
+    def test_delete_team_forbidden(self, client):
+        fake_user = type("User", (), {"id": 15})()
+        app.dependency_overrides[get_current_user] = lambda: fake_user
+
+        res = client.detele("/team/7")
+        assert res.status_code == 403
+        assert res.json()["detail"] == "Deleting teams is not allowed"
+
+        app.dependency_overrides.clear()
