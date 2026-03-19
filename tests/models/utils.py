@@ -3,6 +3,7 @@ import uuid
 from app.models.ninja import Ninja
 from app.models.village import Village
 from app.models.user import User
+from app.models.team import Team
 from app.models import enums
 
 
@@ -48,3 +49,15 @@ def create_user(session, **params):
     session.commit()
     session.refresh(user)
     return user
+
+
+def create_team(session, **params):
+    defaults = {
+        "name": "Team 7",
+    }
+    defaults.update(params)
+    team = Team(**defaults)
+    session.add(team)
+    session.commit()
+    session.refresh(team)
+    return team
