@@ -260,3 +260,87 @@ class TestTeamActionEndpointsIntegration:
         res = client_authed.post(f"/team/34/sensei/{ninja_id}")
         assert res.status_code == 404
         assert res.json()["detail"] == "Team not found"
+
+    def test_add_ninja_ok(self, client_authed, db_session, setup_user):
+        session = db_session()
+        team = create_team(session=session)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.genin,
+        )
+        team_id = team.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/team/{team_id}/members/{ninja_id}")
+        assert res.status_code == 200
+        assert res.json()["id"] == team_id
+        assert any(member["id"] == ninja_id for member in res.json()["members"])
+
+    def test_add_ninja_fourth_member_error(self, client_authed, db_session, setup_user):
+        session = db_session()
+        team = create_team(session=session)
+        create_ninja(session=session, user_id=setup_user.id, team_id=team.id)
+        create_ninja(session=session, user_id=setup_user.id, team_id=team.id, name="N2")
+        create_ninja(session=session, user_id=setup_user.id, team_id=team.id, name="N3")
+        ninja4 = create_ninja(session=session, user_id=setup_user.id, name="N4")
+        team_id = team.id
+        ninja4_id = ninja4.id
+        session.close()
+
+        res = client_authed.post(f"/team/{team_id}/members/{ninja4_id}")
+        assert res.status_code == 400
+        assert res.json()["detail"] == "Team already has 3 members."
+
+    def test_add_ninja_sensei_error(self, client_authed, db_session, setup_user):
+        session = db_session()
+        sensei = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.jonin,
+        )
+        team = create_team(session=session, sensei_id=sensei.id)
+        team_id = team.id
+        sensei_id = sensei.id
+        session.close()
+
+        res = client_authed.post(f"/team/{team_id}/members/{sensei_id}")
+        assert res.status_code == 400
+        assert res.json()["detail"] == "Sensei cannot be a regular member."
+
+    def test_add_ninja_academy_error(self, client_authed, db_session, setup_user):
+        session = db_session()
+        team = create_team(session=session)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.academy,
+        )
+        team_id = team.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/team/{team_id}/members/{ninja_id}")
+        assert res.status_code == 400
+        assert res.json()["detail"] == "Academy students cannot join a team."
+
+    def test_add_ninja_team_not_found(self, client_authed, db_session, setup_user):
+        session = db_session()
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/team/9999/members/{ninja_id}")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Team not found"
+
+    def test_add_ninja_ninja_not_found(self, client_authed, db_session):
+        session = db_session()
+        team = create_team(session=session)
+        team_id = team.id
+        session.close()
+
+        res = client_authed.post(f"/team/{team_id}/members/9999")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Ninja not found"
