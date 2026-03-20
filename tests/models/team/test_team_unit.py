@@ -85,7 +85,7 @@ class TestTeamUnitSchema:
         fake_user = type("User", (), {"id": 15})()
         app.dependency_overrides[get_current_user] = lambda: fake_user
 
-        res = client.detele("/team/7")
+        res = client.delete("/team/7")
         assert res.status_code == 403
         assert res.json()["detail"] == "Deleting teams is not allowed"
 
