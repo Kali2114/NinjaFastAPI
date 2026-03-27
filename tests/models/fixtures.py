@@ -27,7 +27,9 @@ def client_authed(setup_user):
 def _clean_db_before_test(db_session):
     s = db_session()
     try:
-        s.execute(text('TRUNCATE ninja, team, "user" RESTART IDENTITY CASCADE'))
+        s.execute(
+            text('TRUNCATE ninja, team, "user", village RESTART IDENTITY CASCADE')
+        )
         s.commit()
     finally:
         s.close()

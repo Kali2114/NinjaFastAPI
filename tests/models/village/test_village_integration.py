@@ -72,3 +72,32 @@ class TestVillageIntegration:
     def test_set_kage_errors(self, ninja, village, expected_error):
         with pytest.raises(ValueError, match=expected_error):
             getattr(self, village).set_kage(getattr(self, ninja))
+
+
+@pytest.mark.integration
+class TestVillageActionEndpointsIntegration:
+    def test_get_all_villages(self, client, db_session):
+        session = db_session()
+        create_village(session=session)
+        create_village(session=session, name=enums.VillageEnum.hoshigakure)
+        session.close()
+
+        res = client.get("/village")
+        names = {village["name"] for village in res.json()}
+        assert res.status_code == 200
+        assert names == {"Hidden Star Village", "Hidden Leaf Village"}
+
+    def test_get_detail_village(self, client, db_session):
+        session = db_session()
+        village = create_village(session=session)
+        session.close()
+
+        res = client.get(f"/village/{village.id}")
+        assert res.status_code == 200
+        assert res.json()["name"] == enums.VillageEnum.konoha.value
+        assert res.json()["id"] == village.id
+
+    def test_get_detail_village_404(self, client, db_session):
+        res = client.get("/village/15")
+        assert res.status_code == 404
+        assert res.json() == {"detail": "Village not found"}
