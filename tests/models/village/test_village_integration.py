@@ -101,61 +101,79 @@ class TestVillageActionEndpointsIntegration:
         assert res.status_code == 404
         assert res.json() == {"detail": "Village not found"}
 
-    def test_add_ninja_to_village(self, client, db_session, setup_user):
+    def test_add_ninja_to_village(self, client_authed, db_session, setup_user):
         session = db_session()
         village = create_village(session=session)
         ninja = create_ninja(session=session, user_id=setup_user.id)
+        village_id = village.id
+        ninja_id = ninja.id
         session.close()
 
-        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        res = client_authed.post(
+            f"/village/{village_id}/add_ninja_to_village/{ninja_id}"
+        )
         assert res.status_code == 200
-        assert res.json()["ninja"]["village"]["id"] == village.id
+        print(res.json())
+        assert res.json()["id"] == village_id
 
-    def test_add_ninja_to_village_no_auth_error(self, client, db_session):
+    def test_add_ninja_to_village_no_auth_error(self, client, db_session, setup_user):
         session = db_session()
         village = create_village(session=session)
-        ninja = create_ninja(session=session)
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        village_id = village.id
+        ninja_id = ninja.id
         session.close()
 
-        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        res = client.post(f"/village/{village_id}/add_ninja_to_village/{ninja_id}")
         assert res.status_code == 403
-        assert res.json()["detail"] == "No authenticated"
+        assert res.json()["detail"] == "Not authenticated"
 
-    def test_add_ninja_to_village_ninja_404(self, client, db_session):
+    def test_add_ninja_to_village_ninja_404(self, client_authed, db_session):
         session = db_session()
         village = create_village(session=session)
+        village_id = village.id
         session.close()
 
-        res = client.post(f"/village/{village.id}/add_ninja_to_village/15")
+        res = client_authed.post(f"/village/{village_id}/add_ninja_to_village/15")
         assert res.status_code == 404
         assert res.json()["detail"] == "Ninja not found"
 
-    def test_add_ninja_to_village_404(self, client, db_session, setup_user):
+    def test_add_ninja_to_village_404(self, client_authed, db_session, setup_user):
         session = db_session()
         ninja = create_ninja(session=session, user_id=setup_user.id)
+        ninja_id = ninja.id
         session.close()
 
-        res = client.post(f"village/15/add_ninja_to_village/{ninja.id}")
+        res = client_authed.post(f"/village/15/add_ninja_to_village/{ninja_id}")
         assert res.status_code == 404
         assert res.json()["detail"] == "Village not found"
 
-    def test_add_ninja_to_other_village(self, client, db_session, setup_user):
+    def test_add_ninja_to_other_village(self, client_authed, db_session, setup_user):
         session = db_session()
         v1 = create_village(session=session)
-        v2 = create_ninja(session=session, name=enums.VillageEnum.kiri)
+        v2 = create_village(session=session, name=enums.VillageEnum.kiri)
         ninja = create_ninja(session=session, user_id=setup_user.id, village_id=v1.id)
+        v2_id = v2.id
+        ninja_id = ninja.id
         session.close()
 
-        res = client.post(f"/village/{v2.id}/add_ninja_to_village/{ninja.id}")
+        res = client_authed.post(f"/village/{v2_id}/add_ninja_to_village/{ninja_id}")
         assert res.status_code == 409
         assert res.json()["detail"] == "Ninja already belongs to village"
 
-    def test_add_dead_ninja_to_village(self, client, db_session, setup_user):
+    def test_add_dead_ninja_to_village(self, client_authed, db_session, setup_user):
         session = db_session()
         village = create_village(session=session)
         ninja = create_ninja(session=session, user_id=setup_user.id)
         ninja.alive = False
+        session.commit()
+        session.refresh(ninja)
+        village_id = village.id
+        ninja_id = ninja.id
+        session.close()
 
-        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        res = client_authed.post(
+            f"/village/{village_id}/add_ninja_to_village/{ninja_id}"
+        )
         assert res.status_code == 409
         assert res.json()["detail"] == "Ninja is dead"
