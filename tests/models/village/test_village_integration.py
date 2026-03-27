@@ -10,7 +10,6 @@ from app.models import enums
 
 @pytest.mark.integration
 class TestVillageIntegration:
-
     def setup_method(self):
         self.session = SessionLocal()
         self.user = create_user(self.session)
@@ -101,3 +100,62 @@ class TestVillageActionEndpointsIntegration:
         res = client.get("/village/15")
         assert res.status_code == 404
         assert res.json() == {"detail": "Village not found"}
+
+    def test_add_ninja_to_village(self, client, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        session.close()
+
+        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        assert res.status_code == 200
+        assert res.json()["ninja"]["village"]["id"] == village.id
+
+    def test_add_ninja_to_village_no_auth_error(self, client, db_session):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(session=session)
+        session.close()
+
+        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        assert res.status_code == 403
+        assert res.json()["detail"] == "No authenticated"
+
+    def test_add_ninja_to_village_ninja_404(self, client, db_session):
+        session = db_session()
+        village = create_village(session=session)
+        session.close()
+
+        res = client.post(f"/village/{village.id}/add_ninja_to_village/15")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Ninja not found"
+
+    def test_add_ninja_to_village_404(self, client, db_session, setup_user):
+        session = db_session()
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        session.close()
+
+        res = client.post(f"village/15/add_ninja_to_village/{ninja.id}")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Village not found"
+
+    def test_add_ninja_to_other_village(self, client, db_session, setup_user):
+        session = db_session()
+        v1 = create_village(session=session)
+        v2 = create_ninja(session=session, name=enums.VillageEnum.kiri)
+        ninja = create_ninja(session=session, user_id=setup_user.id, village_id=v1.id)
+        session.close()
+
+        res = client.post(f"/village/{v2.id}/add_ninja_to_village/{ninja.id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Ninja already belongs to village"
+
+    def test_add_dead_ninja_to_village(self, client, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        ninja.alive = False
+
+        res = client.post(f"/village/{village.id}/add_ninja_to_village/{ninja.id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Ninja is dead"

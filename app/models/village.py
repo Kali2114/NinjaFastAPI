@@ -32,7 +32,7 @@ class Village(Base):
     def add_ninja_to_village(self, ninja):
         ensure_alive(ninja)
         if ninja.village is not None:
-            raise ValueError("Ninja already belongs to village.")
+            raise ValueError("Ninja already belongs to village")
         ninja.village = self
 
     def set_kage(self, ninja):
