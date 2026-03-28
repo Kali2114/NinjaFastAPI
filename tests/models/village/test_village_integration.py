@@ -86,6 +86,37 @@ class TestVillageActionEndpointsIntegration:
         assert res.status_code == 200
         assert names == {"Hidden Star Village", "Hidden Leaf Village"}
 
+    def test_get_sorted_villages_list_by_name(self, client, db_session):
+        session = db_session()
+        create_village(session=session)
+        create_village(session=session, name=enums.VillageEnum.hoshigakure)
+        create_village(session=session, name=enums.VillageEnum.uzushiogakure)
+        session.close()
+
+        res = client.get("/village/?sort_by=name")
+        assert res.status_code == 200
+        print(res.json())
+        names = [village["name"] for village in res.json()]
+        assert names == sorted(names)
+
+    def test_get_sorted_villages_list_by_country(self, client, db_session):
+        session = db_session()
+        create_village(session=session)
+        create_village(
+            session=session, name=enums.VillageEnum.kumo, country=enums.CountryEnum.rain
+        )
+        create_village(
+            session=session,
+            name=enums.VillageEnum.suna,
+            country=enums.CountryEnum.grass,
+        )
+        session.close()
+
+        res = client.get("/village/?sort_by=country")
+        assert res.status_code == 200
+        countries = [village["country"] for village in res.json()]
+        assert countries == sorted(countries)
+
     def test_get_detail_village(self, client, db_session):
         session = db_session()
         village = create_village(session=session)

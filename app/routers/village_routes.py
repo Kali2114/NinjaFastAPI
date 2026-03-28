@@ -12,8 +12,17 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[VillageReadSchema], status_code=200)
-def get_all_villages(db: Session = Depends(get_db_session)):
-    villages = db.query(Village).all()
+def get_all_villages(sort_by: str | None = None, db: Session = Depends(get_db_session)):
+    query = db.query(Village)
+
+    villages = query.all()
+
+    if sort_by == "country":
+        villages = sorted(villages, key=lambda village: village.country.value)
+
+    if sort_by == "name":
+        villages = sorted(villages, key=lambda village: village.name.value)
+
     return villages
 
 

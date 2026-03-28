@@ -347,6 +347,13 @@ class TestNinjaEndpointsIntegration:
         assert ids.issuperset({n1.id, n2.id})
         session.close()
 
+    def test_get_sorted_ninjas_list_by_name(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(session=session, name="Kiba")
+        create_ninja(session=session, name="Angel")
+        create_ninja(session=session, name="Shika")
+        session.close()
+
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()
         u2 = create_user(
