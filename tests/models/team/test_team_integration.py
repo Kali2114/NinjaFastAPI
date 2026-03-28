@@ -76,7 +76,7 @@ class TestTeamIntegration:
         [
             ("add_as_member_then_sensei", "team1", "already a member"),
             ("set_as_sensei_then_again", "team1", "already a sensei"),
-            ("set_academy_as_sensei", "team1", "Academy students cannot join a team."),
+            ("set_academy_as_sensei", "team1", "Academy students cannot join a team"),
             ("set_as_sensei_another_team", "team2", "already a sensei"),
         ],
     )
@@ -96,8 +96,8 @@ class TestTeamIntegration:
         [
             ("add_same_twice", "already a member"),
             ("add_fourth_member", "already has 3 members"),
-            ("add_sensei_as_member", "Sensei cannot be a regular member."),
-            ("add_academy_student", "Academy students cannot join a team."),
+            ("add_sensei_as_member", "Sensei cannot be a regular member"),
+            ("add_academy_student", "Academy students cannot join a team"),
         ],
     )
     def test_add_ninja_errors(self, setup_fn, expected_error):
@@ -205,7 +205,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{team_id}/sensei/{ninja_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Only jonin can be a sensei."
+        assert res.json()["detail"] == "Only jonin can be a sensei"
 
     def test_set_member_sensei_error(self, client_authed, db_session, setup_user):
         session = db_session()
@@ -222,7 +222,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{team_id}/sensei/{ninja_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Ninja is already a member of a team."
+        assert res.json()["detail"] == "Ninja is already a member of a team"
 
     def test_set_sensei_second_team_error(self, client_authed, db_session, setup_user):
         session = db_session()
@@ -239,7 +239,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{t2_id}/sensei/{ninja_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Ninja is already a sensei of another team."
+        assert res.json()["detail"] == "Ninja is already a sensei of another team"
 
     def test_sensei_not_found_error(self, client_authed, db_session, setup_user):
         session = db_session()
@@ -291,7 +291,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{team_id}/members/{ninja4_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Team already has 3 members."
+        assert res.json()["detail"] == "Team already has 3 members"
 
     def test_add_ninja_sensei_error(self, client_authed, db_session, setup_user):
         session = db_session()
@@ -307,7 +307,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{team_id}/members/{sensei_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Sensei cannot be a regular member."
+        assert res.json()["detail"] == "Sensei cannot be a regular member"
 
     def test_add_ninja_academy_error(self, client_authed, db_session, setup_user):
         session = db_session()
@@ -323,7 +323,7 @@ class TestTeamActionEndpointsIntegration:
 
         res = client_authed.post(f"/team/{team_id}/members/{ninja_id}")
         assert res.status_code == 400
-        assert res.json()["detail"] == "Academy students cannot join a team."
+        assert res.json()["detail"] == "Academy students cannot join a team"
 
     def test_add_ninja_team_not_found(self, client_authed, db_session, setup_user):
         session = db_session()
