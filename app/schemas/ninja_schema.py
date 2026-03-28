@@ -23,6 +23,7 @@ class NinjaPublicReadSchema(NinjaBase):
     village_id: Optional[int] = None
     village: Optional[VillageReadSchema] = None
     rank: enums.RankEnum
+    level: Optional[int] = 1
     alive: bool
     forbidden: bool
     model_config = ConfigDict(from_attributes=True)

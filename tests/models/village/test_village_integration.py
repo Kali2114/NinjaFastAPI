@@ -95,7 +95,6 @@ class TestVillageActionEndpointsIntegration:
 
         res = client.get("/village/?sort_by=name")
         assert res.status_code == 200
-        print(res.json())
         names = [village["name"] for village in res.json()]
         assert names == sorted(names)
 

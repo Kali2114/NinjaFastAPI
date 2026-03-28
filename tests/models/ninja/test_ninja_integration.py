@@ -349,10 +349,68 @@ class TestNinjaEndpointsIntegration:
 
     def test_get_sorted_ninjas_list_by_name(self, client, db_session, setup_user):
         session = db_session()
-        create_ninja(session=session, name="Kiba")
-        create_ninja(session=session, name="Angel")
-        create_ninja(session=session, name="Shika")
+        create_ninja(session=session, user_id=setup_user.id, name="Kiba")
+        create_ninja(session=session, user_id=setup_user.id, name="Angel")
+        create_ninja(session=session, user_id=setup_user.id, name="Shika")
         session.close()
+
+        res = client.get("/ninja/?sort_by=name")
+        assert res.status_code == 200
+        names = [ninja["name"] for ninja in res.json()]
+        assert names == sorted(names)
+
+    def test_get_sorted_ninjas_list_by_clan(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session, user_id=setup_user.id, name="Kiba", clan="Inuzuka"
+        )
+        create_ninja(session=session, user_id=setup_user.id, name="Angel", clan="Gods")
+        create_ninja(session=session, user_id=setup_user.id, name="Shika", clan="Nara")
+        session.close()
+
+        res = client.get("/ninja/?sort_by=clan")
+        assert res.status_code == 200
+        clans = [ninja["clan"] for ninja in res.json()]
+        assert clans == sorted(clans)
+
+    def test_get_sorted_ninjas_list_by_level(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(session=session, user_id=setup_user.id, name="Kiba", level=4444)
+        create_ninja(session=session, user_id=setup_user.id, name="Angel", level=30)
+        create_ninja(session=session, user_id=setup_user.id, name="Shika", level=1)
+        session.close()
+
+        res = client.get("/ninja/?sort_by=level")
+        assert res.status_code == 200
+        levels = [ninja["level"] for ninja in res.json()]
+        assert levels == sorted(levels)
+
+    def test_get_sorted_ninjas_list_by_rank(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            rank=enums.RankEnum.academy,
+        )
+        session.close()
+
+        res = client.get("/ninja/?sort_by=rank")
+        assert res.status_code == 200
+        ranks = [ninja["rank"] for ninja in res.json()]
+        assert ranks == sorted(ranks)
 
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()

@@ -120,6 +120,20 @@ class TestTeamActionEndpointsIntegration:
         assert res.status_code == 200
         assert names == {"Team 7", "Team 2"}
 
+    def test_get_sorted_teams_by_name(self, client, db_session):
+        session = db_session()
+        create_team(session=session)
+        create_team(session=session, name="Team 2")
+        create_team(session=session, name="Team 8")
+        create_team(session=session, name="Anaconda Team")
+        create_team(session=session, name="Nightmare Team")
+        session.close()
+
+        res = client.get("/team/?sort_by=name")
+        assert res.status_code == 200
+        names = [team["name"] for team in res.json()]
+        assert names == sorted(names)
+
     def test_get_detail_team(self, client, db_session):
         session = db_session()
         t1 = create_team(session=session)

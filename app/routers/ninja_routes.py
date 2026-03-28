@@ -11,8 +11,21 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[NinjaPublicReadSchema], status_code=200)
-def get_all_ninjas(db: Session = Depends(get_db_session)):
-    return db.query(Ninja).all()
+def get_all_ninjas(sort_by: str | None = None, db: Session = Depends(get_db_session)):
+    query = db.query(Ninja)
+    if sort_by == "name":
+        query = query.order_by(Ninja.name)
+    elif sort_by == "clan":
+        query = query.order_by(Ninja.clan)
+    elif sort_by == "level":
+        query = query.order_by(Ninja.level)
+
+    ninjas = query.all()
+
+    if sort_by == "rank":
+        ninjas = sorted(ninjas, key=lambda ninja: ninja.rank.value)
+
+    return ninjas
 
 
 @router.get("/my_ninjas", response_model=list[NinjaPublicReadSchema], status_code=200)
