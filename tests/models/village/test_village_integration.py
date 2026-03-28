@@ -113,7 +113,6 @@ class TestVillageActionEndpointsIntegration:
             f"/village/{village_id}/add_ninja_to_village/{ninja_id}"
         )
         assert res.status_code == 200
-        print(res.json())
         assert res.json()["id"] == village_id
 
     def test_add_ninja_to_village_no_auth_error(self, client, db_session, setup_user):
@@ -177,3 +176,137 @@ class TestVillageActionEndpointsIntegration:
         )
         assert res.status_code == 409
         assert res.json()["detail"] == "Ninja is dead"
+
+    def test_set_kage(self, client_authed, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.kage,
+            village_id=village.id,
+        )
+        village_id = village.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 200
+        assert res.json()["id"] == village_id
+        assert res.json()["kage_id"] == ninja_id
+
+    def test_set_kage_no_auth(self, client, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(session=session, user_id=setup_user.id)
+        village_id = village.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 403
+        assert res.json()["detail"] == "Not authenticated"
+
+    def test_set_kage_dead_ninja(self, client_authed, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.kage,
+            village_id=village.id,
+        )
+        ninja.alive = False
+        session.commit()
+        session.refresh(ninja)
+        village_id = village.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Ninja is dead"
+
+    def test_set_kage_lower_rank(self, client_authed, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.academy,
+            village_id=village.id,
+        )
+        village_id = village.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Only kage ninja rank can be a kage of village"
+
+    def test_set_kage_when_have_kage(self, client_authed, db_session, setup_user):
+        session = db_session()
+        village = create_village(session=session)
+        existing_kage = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.kage,
+            village_id=village.id,
+        )
+        village.kage_id = existing_kage.id
+        session.commit()
+        session.refresh(village)
+        another_kage = create_ninja(
+            name="test_ninja",
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.kage,
+            village_id=village.id,
+        )
+        village_id = village.id
+        ninja_id = another_kage.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Village already has a kage"
+
+    def test_set_kage_from_another_village(self, client_authed, db_session, setup_user):
+        session = db_session()
+        v1 = create_village(session=session)
+        v2 = create_village(session=session, name=enums.VillageEnum.suna)
+        ninja = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            rank=enums.RankEnum.kage,
+            village_id=v2.id,
+        )
+        village_id = v1.id
+        ninja_id = ninja.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/{ninja_id}")
+        assert res.status_code == 409
+        assert res.json()["detail"] == "Only member of village can be a kage"
+
+    def test_set_kage_ninja_not_found(self, client_authed, db_session):
+        session = db_session()
+        village = create_village(session=session)
+        village_id = village.id
+        session.close()
+
+        res = client_authed.post(f"/village/{village_id}/set_kage/12")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Ninja not found"
+
+    def test_set_kage_village_not_found(self, client_authed, db_session, setup_user):
+        session = db_session()
+        kage = create_ninja(
+            session=session, user_id=setup_user.id, rank=enums.RankEnum.kage
+        )
+        kage_id = kage.id
+        session.close()
+
+        res = client_authed.post(f"/village/12/set_kage/{kage_id}")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Village not found"
