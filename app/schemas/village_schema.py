@@ -12,7 +12,6 @@ class VillageBaseSchema(BaseModel):
 
 class VillageReadSchema(VillageBaseSchema):
     id: int
-    kage: Optional[int] = None
     kage_id: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
 

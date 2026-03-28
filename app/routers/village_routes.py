@@ -42,3 +42,24 @@ def add_ninja_to_village(
         return village
     except (ValueError, RuntimeError) as e:
         raise HTTPException(409, detail=str(e))
+
+
+@router.post(
+    "/{village_id}/set_kage/{ninja_id}",
+    response_model=VillageReadSchema,
+    status_code=200,
+)
+def set_kage(
+    village_id: int,
+    ninja_id: int,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+):
+    village = find_village(db, village_id)
+    ninja = find_ninja(db, ninja_id, user.id)
+    try:
+        village.set_kage(ninja)
+        db.flush()
+        return village
+    except (ValueError, RuntimeError) as e:
+        raise HTTPException(409, detail=str(e))
