@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
-from app.models import Ninja, User
+from app.models import Ninja, User, enums
 from app.schemas.ninja_schema import NinjaPublicReadSchema, NinjaCreateSchema
 from app.routers.utils import get_current_user, find_ninja
 
@@ -11,8 +11,28 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[NinjaPublicReadSchema], status_code=200)
-def get_all_ninjas(sort_by: str | None = None, db: Session = Depends(get_db_session)):
+def get_all_ninjas(
+    sort_by: str | None = None,
+    level: int | None = None,
+    alive: bool | None = None,
+    forbidden: bool | None = None,
+    rank: enums.RankEnum | None = None,
+    village_id: int | None = None,
+    db: Session = Depends(get_db_session),
+):
     query = db.query(Ninja)
+
+    if level is not None:
+        query = query.filter(Ninja.level == level)
+    if alive is not None:
+        query = query.filter(Ninja.alive == alive)
+    if forbidden is not None:
+        query = query.filter(Ninja.forbidden == forbidden)
+    if rank is not None:
+        query = query.filter(Ninja.rank == rank)
+    if village_id is not None:
+        query = query.filter(Ninja.village_id == village_id)
+
     if sort_by == "name":
         query = query.order_by(Ninja.name)
     elif sort_by == "clan":

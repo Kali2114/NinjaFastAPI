@@ -5,7 +5,7 @@ from app.models.ninja import Ninja
 from app.models.user import User
 from app.db_connection import SessionLocal
 from app.models import enums
-from tests.models.utils import create_ninja, create_user
+from tests.models.utils import create_ninja, create_user, create_village
 
 
 @pytest.mark.integration
@@ -411,6 +411,163 @@ class TestNinjaEndpointsIntegration:
         assert res.status_code == 200
         ranks = [ninja["rank"] for ninja in res.json()]
         assert ranks == sorted(ranks)
+
+    def test_get_all_ninjas_filtered_by_rank(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            rank=enums.RankEnum.academy,
+        )
+        rank = n1.rank.value
+        name = n1.name
+        session.close()
+        res = client.get(f"/ninja/?rank={rank}")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        assert res.json()[0]["name"] == name
+        assert res.json()[0]["rank"] == rank
+
+    def test_get_all_ninjas_filtered_by_level(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            level=20,
+            rank=enums.RankEnum.academy,
+        )
+        level = n1.level
+        name = n1.name
+        session.close()
+
+        res = client.get(f"/ninja/?level={level}")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        print(res.json())
+        assert res.json()[0]["name"] == name
+        assert res.json()[0]["level"] == level
+
+    def test_get_all_ninjas_filtered_by_village(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        v1 = create_village(session=session)
+        village_id = v1.id
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            rank=enums.RankEnum.academy,
+            village_id=village_id,
+        )
+        name = n1.name
+        session.close()
+
+        res = client.get(f"/ninja/?village_id={village_id}")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        print(res.json())
+        assert res.json()[0]["name"] == name
+        assert res.json()[0]["village_id"] == village_id
+
+    def test_get_all_ninjas_filtered_by_alive(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            rank=enums.RankEnum.academy,
+            alive=False,
+        )
+        alive = n1.alive
+        name = n1.name
+        session.close()
+
+        res = client.get(f"/ninja/?alive={alive}")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        assert res.json()[0]["name"] == name
+        assert res.json()[0]["alive"] == alive
+
+    def test_get_all_ninjas_filtered_by_forbidden(self, client, db_session, setup_user):
+        session = db_session()
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Kiba",
+            rank=enums.RankEnum.kage,
+        )
+        create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Angel",
+            rank=enums.RankEnum.jonin,
+        )
+        n1 = create_ninja(
+            session=session,
+            user_id=setup_user.id,
+            name="Shika",
+            rank=enums.RankEnum.academy,
+            forbidden=True,
+        )
+        forbidden = n1.forbidden
+        name = n1.name
+        session.close()
+
+        res = client.get(f"/ninja/?forbidden={forbidden}")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        print(res.json())
+        assert res.json()[0]["name"] == name
+        assert res.json()[0]["forbidden"] == forbidden
 
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()
