@@ -565,7 +565,6 @@ class TestNinjaEndpointsIntegration:
         res = client.get(f"/ninja/?forbidden={forbidden}")
         assert res.status_code == 200
         assert len(res.json()) == 1
-        print(res.json())
         assert res.json()[0]["name"] == name
         assert res.json()[0]["forbidden"] == forbidden
 

@@ -134,6 +134,26 @@ class TestTeamActionEndpointsIntegration:
         names = [team["name"] for team in res.json()]
         assert names == sorted(names)
 
+    def test_get_all_teams_filtered_by_sensei(self, client, db_session, setup_user):
+        session = db_session()
+        create_team(session=session)
+        create_team(session=session, name="Team 2")
+        create_team(session=session, name="Team 8")
+        create_team(session=session, name="Anaconda Team")
+        sensei = create_ninja(
+            session=session, user_id=setup_user.id, rank=enums.RankEnum.jonin
+        )
+        create_team(session=session, name="Nightmare Team", sensei_id=sensei.id)
+        sensei_name = sensei.name
+        sensei_id = sensei.id
+        session.close()
+
+        res = client.get(f"/team/?sensei_id={sensei_id}")
+        print(res.json())
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        assert res.json()[0]["sensei"]["name"] == sensei_name
+
     def test_get_detail_team(self, client, db_session):
         session = db_session()
         t1 = create_team(session=session)

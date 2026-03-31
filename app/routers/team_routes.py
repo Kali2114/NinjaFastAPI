@@ -13,8 +13,16 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[TeamReadSchema], status_code=200)
-def get_all_teams(sort_by: str | None = None, db: Session = Depends(get_db_session)):
+def get_all_teams(
+    sort_by: str | None = None,
+    sensei_id: int | None = None,
+    db: Session = Depends(get_db_session),
+):
     query = db.query(Team)
+
+    if sensei_id is not None:
+        query = query.filter(Team.sensei_id == sensei_id)
+
     if sort_by == "name":
         query = query.order_by(Team.name)
     teams = query.all()
