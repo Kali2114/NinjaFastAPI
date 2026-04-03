@@ -15,6 +15,7 @@ def get_all_ninjas(
     sort_by: str | None = None,
     level: int | None = None,
     alive: bool | None = None,
+    page: int = 1,
     forbidden: bool | None = None,
     rank: enums.RankEnum | None = None,
     village_id: int | None = None,
@@ -39,6 +40,11 @@ def get_all_ninjas(
         query = query.order_by(Ninja.clan)
     elif sort_by == "level":
         query = query.order_by(Ninja.level)
+
+    page_size = 10
+    offset = (page - 1) * page_size
+
+    query = query.offset(offset).limit(page_size)
 
     ninjas = query.all()
 

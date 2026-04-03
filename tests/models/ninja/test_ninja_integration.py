@@ -568,6 +568,30 @@ class TestNinjaEndpointsIntegration:
         assert res.json()[0]["name"] == name
         assert res.json()[0]["forbidden"] == forbidden
 
+    def test_get_all_ninjas_return_10_items_on_first_page(
+        self, client, db_session, setup_user
+    ):
+        session = db_session()
+        for name in range(11):
+            create_ninja(session=session, user_id=setup_user.id, name=f"Nina#{name}")
+        session.close()
+
+        res = client.get("/ninja/?page=1")
+        assert res.status_code == 200
+        assert len(res.json()) == 10
+
+    def test_get_all_ninjas_return_2_items_on_second_page(
+        self, client, db_session, setup_user
+    ):
+        session = db_session()
+        for name in range(12):
+            create_ninja(session=session, user_id=setup_user.id, name=f"Nina#{name}")
+        session.close()
+
+        res = client.get("/ninja/?page=2")
+        assert res.status_code == 200
+        assert len(res.json()) == 2
+
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()
         u2 = create_user(
