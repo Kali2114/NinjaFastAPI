@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.params import Query
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db_session
@@ -15,7 +16,7 @@ def get_all_ninjas(
     sort_by: str | None = None,
     level: int | None = None,
     alive: bool | None = None,
-    page: int = 1,
+    page: int = Query(default=1, ge=1),
     forbidden: bool | None = None,
     rank: enums.RankEnum | None = None,
     village_id: int | None = None,

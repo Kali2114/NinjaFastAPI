@@ -469,7 +469,6 @@ class TestNinjaEndpointsIntegration:
         res = client.get(f"/ninja/?level={level}")
         assert res.status_code == 200
         assert len(res.json()) == 1
-        print(res.json())
         assert res.json()[0]["name"] == name
         assert res.json()[0]["level"] == level
 
@@ -502,7 +501,6 @@ class TestNinjaEndpointsIntegration:
         res = client.get(f"/ninja/?village_id={village_id}")
         assert res.status_code == 200
         assert len(res.json()) == 1
-        print(res.json())
         assert res.json()[0]["name"] == name
         assert res.json()[0]["village_id"] == village_id
 
@@ -591,6 +589,48 @@ class TestNinjaEndpointsIntegration:
         res = client.get("/ninja/?page=2")
         assert res.status_code == 200
         assert len(res.json()) == 2
+
+    def test_get_all_ninjas_return_empty_list_on_second_page_with_10_records(
+        self, client, db_session, setup_user
+    ):
+        session = db_session()
+        for n in range(10):
+            create_ninja(session=session, user_id=setup_user.id, name=f"ninja{n}")
+        session.close()
+
+        res = client.get("/ninja/?page=2")
+        assert res.status_code == 200
+        assert res.json() == []
+
+    def test_get_all_ninjas_return_422_when_page_is_zero(
+        self, client, db_session, setup_user
+    ):
+        res = client.get("/ninja/?page=0")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be greater than or equal to 1"
+        )
+
+    def test_get_all_ninjas_return_422_when_page_is_negative(
+        self, client, db_session, setup_user
+    ):
+        res = client.get("/ninja/?page=-1")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be greater than or equal to 1"
+        )
+
+    def test_get_all_ninjas_return_422_when_page_is_not_integer(
+        self, client, db_session, setup_user
+    ):
+        res = client.get("/ninja/?page=abc")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be a valid integer, unable to parse string as an integer"
+        )
 
     def test_get_my_ninjas_ok(self, client_authed, db_session, setup_user):
         session = db_session()
