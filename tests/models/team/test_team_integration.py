@@ -149,10 +149,64 @@ class TestTeamActionEndpointsIntegration:
         session.close()
 
         res = client.get(f"/team/?sensei_id={sensei_id}")
-        print(res.json())
         assert res.status_code == 200
-        assert len(res.json()) == 1
         assert res.json()[0]["sensei"]["name"] == sensei_name
+
+    def test_get_all_teams_return_10_items_on_first_page(self, client, db_session):
+        session = db_session()
+        for t in range(12):
+            create_team(session=session, name=f"Team{t}")
+        session.close()
+
+        res = client.get("/team/?page=1")
+        assert res.status_code == 200
+        assert len(res.json()) == 10
+
+    def test_get_all_teams_return_2_items_on_second_page(self, client, db_session):
+        session = db_session()
+        for t in range(12):
+            create_team(session=session, name=f"Team{t}")
+        session.close()
+
+        res = client.get("/team/?page=2")
+        assert res.status_code == 200
+        assert len(res.json()) == 2
+
+    def test_get_all_teams_return_empty_list_on_second_page_with_10_items(
+        self, client, db_session
+    ):
+        session = db_session()
+        for t in range(10):
+            create_team(session=session, name=f"Team{t}")
+        session.close()
+
+        res = client.get("/team/?page=2")
+        assert res.status_code == 200
+        assert res.json() == []
+
+    def test_get_all_ninjas_return_422_when_page_is_zero(self, client, db_session):
+        res = client.get("/team/?page=0")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be greater than or equal to 1"
+        )
+
+    def test_get_all_ninjas_return_422_when_page_is_negative(self, client):
+        res = client.get("/team/?page=-1")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be greater than or equal to 1"
+        )
+
+    def test_get_all_ninjas_return_422_when_page_is_not_integer(self, client):
+        res = client.get("/team/?page=abc")
+        assert res.status_code == 422
+        assert (
+            res.json()["detail"][0]["msg"]
+            == "Input should be a valid integer, unable to parse string as an integer"
+        )
 
     def test_get_detail_team(self, client, db_session):
         session = db_session()

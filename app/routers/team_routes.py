@@ -1,3 +1,4 @@
+from fastapi.params import Query
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +17,7 @@ router = APIRouter()
 def get_all_teams(
     sort_by: str | None = None,
     sensei_id: int | None = None,
+    page: int = Query(default=1, ge=1),
     db: Session = Depends(get_db_session),
 ):
     query = db.query(Team)
@@ -25,7 +27,14 @@ def get_all_teams(
 
     if sort_by == "name":
         query = query.order_by(Team.name)
+
+    page_size = 10
+    offset = (page - 1) * page_size
+
+    query = query.offset(offset).limit(page_size)
+
     teams = query.all()
+
     return teams
 
 

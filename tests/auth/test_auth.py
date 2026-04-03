@@ -24,6 +24,7 @@ class TestAuth:
         assert data["email"] == payload["email"]
         assert "hashed_password" not in data
         user = db.query(User).filter_by(username=payload["username"]).first()
+        db.close()
         assert user is not None
 
     def test_register_user_exists_fail(self, client, setup_user):
