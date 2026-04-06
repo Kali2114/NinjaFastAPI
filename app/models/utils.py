@@ -4,6 +4,9 @@ from app.models.enums import RankEnum
 from uuid import uuid4
 
 
+EXTENSIONS = [".jpg", ".png", ".jpeg"]
+
+
 def ensure_alive(ninja):
     if not ninja.alive:
         raise RuntimeError("Ninja is dead")
@@ -28,4 +31,23 @@ def validate_set_kage(ninja, village):
 def generate_avatar_name(name):
     base_name, ext = os.path.splitext(name)
     new_name = str(uuid4()) + ext
+    return new_name
+
+
+def validate_avatar(file):
+    if not file or not file.filename:
+        raise ValueError("No file provided")
+    ext = os.path.splitext(file.filename)[1]
+    if ext.lower() not in EXTENSIONS:
+        raise ValueError("Invalid file extension")
+
+
+def save_avatar_in_storage(file):
+    validate_avatar(file)
+    new_name = generate_avatar_name(file.filename)
+    path = os.path.join("media", "avatars", new_name)
+    with open(path, "wb") as buffer:
+        data = file.file.read()
+        buffer.write(data)
+
     return new_name

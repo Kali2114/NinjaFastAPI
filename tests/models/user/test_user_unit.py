@@ -1,8 +1,14 @@
 import pytest
 from pydantic import ValidationError
+import os
+from io import BytesIO
 
 from app.schemas.user_schema import UserCreateSchema
-from app.models.utils import generate_avatar_name
+from app.models.utils import (
+    generate_avatar_name,
+    validate_avatar,
+    save_avatar_in_storage,
+)
 
 
 @pytest.mark.unit_schema
@@ -48,3 +54,51 @@ class TestUserUnit:
 
         assert result != base_name
         assert result.endswith(".png")
+
+    @pytest.mark.parametrize(
+        "filename, should_raise",
+        [
+            ("avatar.png", False),
+            ("photo.jpg", False),
+            ("image.jpeg", False),
+            ("file.txt", True),
+            ("", True),
+        ],
+    )
+    def test_validate_avatar(self, filename, should_raise):
+        class FakeFile:
+            def __init__(self, filename):
+                self.filename = filename
+
+        file = FakeFile(filename)
+        if should_raise:
+            with pytest.raises(ValueError):
+                validate_avatar(file)
+        else:
+            validate_avatar(file)
+
+    def test_save_avatar_in_storage(self):
+        content = b"fake image content"
+
+        class FakeUploadFile:
+            def __init__(self, filename, content):
+                self.filename = filename
+                self.file = BytesIO(content)
+
+        file = FakeUploadFile("avatar.png", content)
+
+        os.makedirs(os.path.join("media", "avatars"), exist_ok=True)
+
+        result = save_avatar_in_storage(file)
+
+        saved_path = os.path.join("media", "avatars", result)
+
+        assert result.endswith(".png")
+        assert os.path.exists(saved_path)
+
+        with open(saved_path, "rb") as saved_file:
+            saved_content = saved_file.read()
+
+        assert saved_content == content
+
+        os.remove(saved_path)
