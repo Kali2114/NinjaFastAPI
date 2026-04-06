@@ -22,6 +22,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(30), unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    avatar_filename = Column(String(255), nullable=True)
     ninjas = relationship("Ninja", back_populates="user")
     is_active = Column(
         Boolean, default=True, server_default=text("true"), nullable=False

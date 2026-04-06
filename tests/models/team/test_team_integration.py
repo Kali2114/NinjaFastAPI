@@ -2,8 +2,6 @@ import pytest
 
 from app.db_connection import SessionLocal
 from app.models.team import Team
-from app.models.ninja import Ninja
-from app.models.user import User
 from app.models.ninja import enums
 from tests.models.utils import create_ninja, create_user, create_team
 
@@ -30,11 +28,6 @@ class TestTeamIntegration:
         self.session.commit()
 
     def teardown_method(self):
-        self.session.query(Ninja).delete()
-        self.session.query(User).delete()
-        self.session.query(Team).delete()
-
-        self.session.commit()
         self.session.close()
 
     def add_same_twice(self):

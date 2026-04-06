@@ -21,6 +21,7 @@ class TestUserModelStructure:
         assert isinstance(columns["id"]["type"], Integer)
         assert isinstance(columns["username"]["type"], String)
         assert isinstance(columns["email"]["type"], String)
+        assert isinstance(columns["avatar_filename"]["type"], String)
         assert isinstance(columns["hashed_password"]["type"], String)
         assert isinstance(columns["is_active"]["type"], Boolean)
         assert isinstance(columns["created_at"]["type"], DateTime)
@@ -29,6 +30,8 @@ class TestUserModelStructure:
         columns = db_inspector.get_columns(self.table)
 
         for column in columns:
+            if column["name"] == "avatar_filename":
+                continue
             assert column["nullable"] is False
 
     def test_column_constraints(self, db_inspector):

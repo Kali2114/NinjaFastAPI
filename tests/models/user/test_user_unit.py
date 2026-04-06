@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.user_schema import UserCreateSchema
+from app.models.utils import generate_avatar_name
 
 
 @pytest.mark.unit_schema
@@ -36,3 +37,14 @@ class TestUserUnitSchema:
         }
         with pytest.raises(ValidationError):
             UserCreateSchema(**bad_email)
+
+
+@pytest.mark.unit
+class TestUserUnit:
+
+    def test_generate_avatar_name(self):
+        base_name = "avatar.png"
+        result = generate_avatar_name(base_name)
+
+        assert result != base_name
+        assert result.endswith(".png")

@@ -2,7 +2,6 @@ import pytest
 import random
 
 from app.models.ninja import Ninja
-from app.models.user import User
 from app.db_connection import SessionLocal
 from app.models import enums
 from tests.models.utils import create_ninja, create_user, create_village
@@ -17,9 +16,6 @@ class TestNinjaModelIntegration:
         self.ninja = create_ninja(session=self.session, user_id=self.user.id)
 
     def teardown_method(self):
-        self.session.query(Ninja).delete()
-        self.session.query(User).delete()
-        self.session.commit()
         self.session.close()
 
     def test_valid_chakra_nature(self):

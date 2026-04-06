@@ -1,8 +1,5 @@
 import pytest
 
-from app.models.ninja import Ninja
-from app.models.village import Village
-from app.models.user import User
 from app.db_connection import SessionLocal
 from tests.models.utils import create_ninja, create_village, create_user
 from app.models import enums
@@ -41,10 +38,6 @@ class TestVillageIntegration:
         self.ninja = create_ninja(user_id=self.user.id, session=self.session)
 
     def teardown_method(self):
-        self.session.query(Ninja).delete()
-        self.session.query(User).delete()
-        self.session.query(Village).delete()
-        self.session.commit()
         self.session.close()
 
     def test_add_ninja_to_village_success(self):

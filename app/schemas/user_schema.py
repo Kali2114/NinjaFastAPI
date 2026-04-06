@@ -1,7 +1,7 @@
 from pydantic import BaseModel, StringConstraints, EmailStr, Field
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional
 
 from app.schemas.ninja_schema import NinjaPublicReadSchema
 
@@ -18,6 +18,7 @@ class UserBase(BaseModel):
 class UserReadSchema(UserBase):
     id: int
     is_active: bool
+    avatar_url: Optional[int] = None
     ninjas: list[NinjaPublicReadSchema] = Field(default_factory=list)
     created_at: datetime
 

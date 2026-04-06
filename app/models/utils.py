@@ -1,4 +1,7 @@
+import os
+
 from app.models.enums import RankEnum
+from uuid import uuid4
 
 
 def ensure_alive(ninja):
@@ -20,3 +23,9 @@ def validate_set_kage(ninja, village):
         raise ValueError("Only member of village can be a kage")
     if village.kage:
         raise ValueError("Village already has a kage")
+
+
+def generate_avatar_name(name):
+    base_name, ext = os.path.splitext(name)
+    new_name = str(uuid4()) + ext
+    return new_name
