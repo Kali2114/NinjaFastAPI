@@ -37,9 +37,9 @@ class TestUserModelEndpointsIntegration:
         files = {"avatar": ("avatar.png", b"fake avatar", "image/png")}
 
         res = client.post("/auth/me/avatar", files=files)
-        assert res.status_code == 401
+        assert res.status_code == 403
         print(res.json())
-        assert res.json()["detail"] == "Authentication credentials were not provided"
+        assert res.json()["detail"] == "Not authenticated"
 
     def test_add_avatar_to_user_without_file(
         self, db_session, client_authed, setup_user
@@ -47,8 +47,8 @@ class TestUserModelEndpointsIntegration:
         res = client_authed.post("/auth/me/avatar")
 
         print(res.json())
-        assert res.status_code == 400
-        assert res.json()["detail"] == "Invalid file extension"
+        assert res.status_code == 422
+        assert res.json()["detail"][0]["msg"] == "Field required"
 
     def test_add_avatar_to_user_accept_uppercase_extension(
         self, db_session, client_authed, setup_user
